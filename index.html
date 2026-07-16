@@ -439,24 +439,28 @@
       }
 
       li {
-        flex-direction: column;
-        align-items: stretch;
+        flex-direction: row;
+        align-items: flex-start;
         gap: 8px;
-        padding-right: 12px;
+        padding-right: 10px;
       }
 
       .item-body {
-        width: 100%;
+        width: auto;
+        flex: 1 1 auto;
       }
 
       .item-actions {
-        width: 100%;
+        width: 42px;
         min-width: 0;
-        align-self: flex-end;
+        margin-left: auto;
+        align-self: flex-start;
       }
 
       .menu-trigger {
-        margin-left: auto;
+        width: 36px;
+        height: 36px;
+        font-size: 20px;
       }
 
       .item-menu {

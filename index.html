@@ -7,17 +7,19 @@
     :root {
       color-scheme: light;
       --canvas-light: #ffffff;
-      --canvas-cream: #fbfbf5;
+      --canvas-cream: #f2f0eb;
       --surface: #ffffff;
-      --ink: #000000;
-      --text: #111111;
-      --muted: #52525b;
+      --ink: rgba(0, 0, 0, 0.87);
+      --text: rgba(0, 0, 0, 0.87);
+      --muted: rgba(0, 0, 0, 0.58);
       --shade-30: #d4d4d8;
       --hairline-light: #e4e4e7;
-      --aloe-10: #c1fbd4;
-      --pistachio-10: #d4f9e0;
-      --shadow-card: 0 1px 2px rgba(255, 255, 255, 0.05), inset 0 1px 0 rgba(255, 255, 255, 0.04);
-      --shadow-float: 0 25px 50px -12px rgba(0, 0, 0, 0.18);
+      --brand-green: #00754a;
+      --brand-green-dark: #1e3932;
+      --brand-green-light: #d4e9e2;
+      --brand-gold: #cba258;
+      --shadow-card: 0 0 0.5px rgba(0, 0, 0, 0.14), 0 1px 1px rgba(0, 0, 0, 0.24);
+      --shadow-float: 0 8px 24px rgba(0, 0, 0, 0.14);
       --radius-sm: 8px;
       --radius-lg: 12px;
       --radius-pill: 9999px;
@@ -35,10 +37,7 @@
       margin: 0;
       min-height: 100vh;
       font-family: "Inter Variable", Inter, "Helvetica Neue", Helvetica, Arial, "Hiragino Sans", "Hiragino Kaku Gothic ProN", Meiryo, sans-serif;
-      background:
-        radial-gradient(circle at top left, rgba(193, 251, 212, 0.72) 0%, transparent 26%),
-        radial-gradient(circle at bottom right, rgba(212, 249, 224, 0.72) 0%, transparent 30%),
-        linear-gradient(180deg, var(--canvas-cream) 0%, #ffffff 100%);
+      background: var(--canvas-cream);
       color: var(--text);
       padding: 24px;
     }
@@ -49,7 +48,7 @@
     }
 
     .shell {
-      background: rgba(255, 255, 255, 0.92);
+      background: rgba(255, 255, 255, 0.96);
       border: 1px solid rgba(228, 228, 231, 0.9);
       border-radius: 20px;
       box-shadow: var(--shadow-float);
@@ -83,9 +82,9 @@
     }
 
     .tab-btn.active {
-      background: #000000;
+      background: var(--brand-green);
       color: #ffffff;
-      border-color: #000000;
+      border-color: var(--brand-green);
     }
 
     .category-panel {
@@ -103,7 +102,7 @@
     }
 
     .owner-panel {
-      background: var(--canvas-cream);
+      background: var(--surface);
       border: 1px solid var(--hairline-light);
       border-radius: var(--radius-lg);
       padding: 14px;
@@ -143,12 +142,12 @@
       background: var(--canvas-light);
       color: var(--ink);
       outline: none;
-      box-shadow: 0 8px 8px rgba(0, 0, 0, 0.08);
+      box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.04), 0 0 0 1px rgba(124, 124, 124, 0.06);
     }
 
     input:focus {
-      border-color: #000000;
-      box-shadow: 0 0 0 1px #000000;
+      border-color: var(--brand-green);
+      box-shadow: 0 0 0 1px var(--brand-green);
     }
 
     .add-btn {
@@ -156,7 +155,7 @@
       border: 0;
       padding: 10px 16px;
       border-radius: var(--radius-pill);
-      background: #000000;
+      background: var(--brand-green);
       color: #ffffff;
       font-size: 14px;
       font-weight: 550;
@@ -169,7 +168,7 @@
 
     .add-btn:hover {
       transform: translateY(-1px);
-      background: #3f3f46;
+      background: #1db954;
     }
 
     ul {
@@ -228,7 +227,7 @@
     }
 
     .check {
-      background: var(--aloe-10);
+      background: var(--brand-green-light);
       color: var(--ink);
     }
 

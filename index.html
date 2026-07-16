@@ -208,6 +208,73 @@
       word-break: break-word;
     }
 
+    .item-link {
+      color: var(--brand-green);
+      text-decoration: underline;
+      word-break: break-all;
+    }
+
+    .item-link:hover {
+      color: #0a6f44;
+    }
+
+    .link-card {
+      display: block;
+      border: 1px solid rgba(0, 117, 74, 0.18);
+      border-radius: 14px;
+      background: linear-gradient(180deg, rgba(212, 233, 226, 0.45), rgba(255, 255, 255, 0.96));
+      padding: 12px 14px;
+      color: inherit;
+      text-decoration: none;
+      box-shadow: 0 6px 16px rgba(0, 0, 0, 0.06);
+      transition: transform 0.15s ease, box-shadow 0.15s ease, border-color 0.15s ease;
+    }
+
+    .link-card:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 10px 22px rgba(0, 0, 0, 0.1);
+      border-color: rgba(0, 117, 74, 0.28);
+    }
+
+    .link-card-top {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 8px;
+      min-width: 0;
+    }
+
+    .link-card-badge {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      padding: 4px 8px;
+      border-radius: 9999px;
+      background: var(--brand-green);
+      color: #fff;
+      font-size: 12px;
+      font-weight: 600;
+      flex-shrink: 0;
+    }
+
+    .link-card-domain {
+      min-width: 0;
+      font-size: 14px;
+      font-weight: 600;
+      color: var(--ink);
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .link-card-url {
+      margin: 0;
+      font-size: 13px;
+      line-height: 1.45;
+      color: var(--muted);
+      overflow-wrap: anywhere;
+    }
+
     .item-actions {
       display: flex;
       gap: 6px;
@@ -350,6 +417,89 @@
         .replaceAll("'", "&#39;");
     }
 
+    function linkifyHtml(text) {
+      const source = String(text);
+      const urlPattern = /(https?:\/\/[^\s<]+|www\.[^\s<]+)/gi;
+      let result = "";
+      let lastIndex = 0;
+
+      for (const match of source.matchAll(urlPattern)) {
+        const raw = match[0];
+        const index = match.index ?? 0;
+
+        result += escapeHtml(source.slice(lastIndex, index));
+
+        let href = raw;
+        let display = raw;
+        let trailing = "";
+
+        while (/[),.!?;:]$/.test(display)) {
+          trailing = display.slice(-1) + trailing;
+          display = display.slice(0, -1);
+        }
+
+        if (display.startsWith("www.")) {
+          href = `https://${display}`;
+        } else {
+          href = display;
+        }
+
+        result += `<a class="item-link" href="${escapeHtml(href)}" target="_blank" rel="noopener noreferrer">${escapeHtml(display)}</a>${escapeHtml(trailing)}`;
+        lastIndex = index + raw.length;
+      }
+
+      result += escapeHtml(source.slice(lastIndex));
+      return result;
+    }
+
+    function trimTrailingPunctuation(value) {
+      let text = String(value).trim();
+
+      while (/[),.!?;:]$/.test(text)) {
+        text = text.slice(0, -1);
+      }
+
+      return text;
+    }
+
+    function extractSingleUrl(text) {
+      const source = String(text).trim();
+      const matched = source.match(/^(https?:\/\/[^\s<]+|www\.[^\s<]+)$/i);
+      if (!matched) {
+        return null;
+      }
+
+      const cleaned = trimTrailingPunctuation(matched[1]);
+      const href = cleaned.startsWith("www.") ? `https://${cleaned}` : cleaned;
+
+      try {
+        return new URL(href);
+      } catch {
+        return null;
+      }
+    }
+
+    function renderItemContent(text) {
+      const url = extractSingleUrl(text);
+
+      if (url) {
+        const domain = url.hostname.replace(/^www\./, "");
+        const label = domain.includes("google.com") && url.pathname.includes("/maps") ? "지도" : "링크";
+
+        return `
+          <a class="link-card" href="${escapeHtml(url.toString())}" target="_blank" rel="noopener noreferrer">
+            <div class="link-card-top">
+              <span class="link-card-badge">${escapeHtml(label)}</span>
+              <span class="link-card-domain">${escapeHtml(domain)}</span>
+            </div>
+            <p class="link-card-url">${escapeHtml(url.toString())}</p>
+          </a>
+        `;
+      }
+
+      return `<span class="item-text">${linkifyHtml(text)}</span>`;
+    }
+
     function normalizeItem(item, fallbackCategoryId = "", fallbackOwnerId = "") {
       const categoryId = item.category_id || item.categoryId || fallbackCategoryId;
       const ownerId = item.owner_id || item.ownerId || fallbackOwnerId;
@@ -468,8 +618,8 @@
                         ? ownerItems
                             .map(
                               (item) => `
-                                <li class="${item.done ? "done" : ""}">
-                                  <span class="item-text">${escapeHtml(item.text)}</span>
+                              <li class="${item.done ? "done" : ""}">
+                                  ${renderItemContent(item.text)}
                                   <div class="item-actions">
                                     <button class="mini check" data-toggle="${item.id}">
                                       ${item.done ? "취소" : "완료"}
@@ -535,7 +685,6 @@
 
       if (REMOTE_ENABLED) {
         const newItem = {
-          id: makeId(),
           category_id: categoryId,
           owner_id: ownerId,
           text,

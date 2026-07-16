@@ -110,7 +110,7 @@
 
     .owner-head {
       display: flex;
-      justify-content: space-between;
+      justify-content: flex-end;
       align-items: center;
       gap: 10px;
       margin-bottom: 12px;
@@ -122,19 +122,6 @@
       font-weight: 550;
       line-height: 1.5;
       color: var(--ink);
-    }
-
-    .owner-pill {
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      padding: 4px 12px;
-      border-radius: var(--radius-pill);
-      background: var(--aloe-10);
-      color: var(--ink);
-      font-size: 12px;
-      font-weight: 400;
-      letter-spacing: 0.72px;
     }
 
     .input-row {
@@ -394,7 +381,6 @@
             return `
               <div class="owner-panel">
                 <div class="owner-head">
-                  <span class="owner-pill">${owner.name}</span>
                   <span class="owner-name">${owner.name}</span>
                 </div>
                 <div class="input-row">

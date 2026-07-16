@@ -13,6 +13,15 @@ create table if not exists public.shopping_items (
   updated_at timestamptz not null default now()
 );
 
+alter table public.shopping_items
+  add column if not exists note text not null default '';
+
+alter table public.shopping_items
+  add column if not exists photo_url text not null default '';
+
+alter table public.shopping_items
+  add column if not exists photo_path text not null default '';
+
 create index if not exists shopping_items_category_owner_idx
 on public.shopping_items (category_id, owner_id);
 

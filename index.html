@@ -858,16 +858,37 @@
       render();
     }
 
+    async function fetchSupabaseRows() {
+      const primaryQuery = supabase
+        .from(TABLE_NAME)
+        .select("id, category_id, owner_id, text, note, photo_url, photo_path, done, created_at")
+        .order("created_at", { ascending: true });
+
+      const primaryResult = await primaryQuery;
+      if (!primaryResult.error) {
+        return primaryResult;
+      }
+
+      const fallbackQuery = supabase
+        .from(TABLE_NAME)
+        .select("id, category_id, owner_id, text, done, created_at")
+        .order("created_at", { ascending: true });
+
+      const fallbackResult = await fallbackQuery;
+      if (fallbackResult.error) {
+        fallbackResult.error.message = `${primaryResult.error.message} | ${fallbackResult.error.message}`;
+      }
+
+      return fallbackResult;
+    }
+
     async function refreshFromSupabase() {
       if (!REMOTE_ENABLED) {
         loadFromStorageAsFallback();
         return;
       }
 
-      const { data, error } = await supabase
-        .from(TABLE_NAME)
-        .select("id, category_id, owner_id, text, note, photo_url, photo_path, done, created_at")
-        .order("created_at", { ascending: true });
+      const { data, error } = await fetchSupabaseRows();
 
       if (error) {
         console.error(error);

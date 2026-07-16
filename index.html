@@ -130,7 +130,7 @@
       margin-bottom: 8px;
     }
 
-    .meta-row.hidden {
+    .meta-row[hidden] {
       display: none;
     }
 
@@ -755,7 +755,7 @@
                     <input type="text" id="input-${category.id}-${owner.id}" placeholder="${owner.name} ${category.title} 추가" />
                     <button class="add-btn" type="button" data-add="${category.id}" data-owner="${owner.id}">추가</button>
                   </div>
-                  <div class="meta-row ${extractSingleUrl(draftState?.drafts?.[`input-${category.id}-${owner.id}`] || "") ? "" : "hidden"}" id="note-row-${category.id}-${owner.id}">
+                  <div class="meta-row" id="note-row-${category.id}-${owner.id}" ${extractSingleUrl(draftState?.drafts?.[`input-${category.id}-${owner.id}`] || "") ? "" : "hidden"}>
                     <input type="text" id="note-${category.id}-${owner.id}" placeholder="링크 메모(선택)" />
                   </div>
                   <ul id="list-${category.id}-${owner.id}">

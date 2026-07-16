@@ -806,7 +806,7 @@
                   </div>
                   <div class="input-row">
                     <input type="text" id="input-${category.id}-${owner.id}" placeholder="${owner.name} ${category.title} 추가" />
-                    <button class="add-btn" data-add="${category.id}" data-owner="${owner.id}">추가</button>
+                    <button class="add-btn" type="button" data-add="${category.id}" data-owner="${owner.id}">추가</button>
                   </div>
                   <div class="meta-row">
                     <input type="text" id="note-${category.id}-${owner.id}" placeholder="메모(선택)" />
@@ -825,10 +825,10 @@
                               <li class="${item.done ? "done" : ""}">
                                   ${renderShoppingItem(item)}
                                   <div class="item-actions">
-                                    <button class="mini check" data-toggle="${item.id}">
+                                    <button class="mini check" type="button" data-toggle="${item.id}">
                                       ${item.done ? "취소" : "완료"}
                                     </button>
-                                    <button class="mini remove" data-remove="${item.id}">
+                                    <button class="mini remove" type="button" data-remove="${item.id}">
                                       삭제
                                     </button>
                                   </div>
@@ -1045,17 +1045,22 @@
         }
       });
 
-      categoryPanel.querySelectorAll("[data-toggle]").forEach((button) => {
-        button.addEventListener("click", () => {
-          void toggleItem(button.dataset.toggle);
-        });
-      });
+      if (!bindEvents.delegatedClicksBound) {
+        categoryPanel.addEventListener("click", (event) => {
+          const toggleButton = event.target.closest("[data-toggle]");
+          if (toggleButton && categoryPanel.contains(toggleButton)) {
+            void toggleItem(toggleButton.dataset.toggle);
+            return;
+          }
 
-      categoryPanel.querySelectorAll("[data-remove]").forEach((button) => {
-        button.addEventListener("click", () => {
-          void removeShoppingItem(button.dataset.remove);
+          const removeButton = event.target.closest("[data-remove]");
+          if (removeButton && categoryPanel.contains(removeButton)) {
+            void removeShoppingItem(removeButton.dataset.remove);
+          }
         });
-      });
+
+        bindEvents.delegatedClicksBound = true;
+      }
     }
 
     function startRealtime() {

@@ -306,8 +306,10 @@
 
     .item-actions {
       display: flex;
+      flex-direction: column;
       gap: 6px;
       flex-shrink: 0;
+      min-width: 80px;
     }
 
     .mini {
@@ -320,10 +322,16 @@
       line-height: 1.49;
       white-space: nowrap;
       cursor: pointer;
+      width: 100%;
     }
 
     .check {
       background: var(--brand-green-light);
+      color: var(--ink);
+    }
+
+    .edit {
+      background: #f4ede4;
       color: var(--ink);
     }
 
@@ -360,20 +368,43 @@
 
     @media (max-width: 720px) {
       body {
-        padding: 16px;
+        padding: 10px;
       }
 
       .shell {
-        padding: 14px;
-        border-radius: 16px;
+        padding: 10px;
+        border-radius: 14px;
       }
 
       .category-panel {
-        padding: 14px;
+        padding: 10px;
       }
 
       .input-row {
         flex-direction: column;
+      }
+
+      input {
+        font-size: 16px;
+      }
+
+      .owner-panel {
+        padding: 10px;
+      }
+
+      li {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 8px;
+      }
+
+      .item-body {
+        width: 100%;
+      }
+
+      .item-actions {
+        width: 100%;
+        min-width: 100%;
       }
 
     }
@@ -680,6 +711,9 @@
                                     <button class="mini check" type="button" data-toggle="${item.id}">
                                       ${item.done ? "취소" : "완료"}
                                     </button>
+                                    <button class="mini edit" type="button" data-edit="${item.id}">
+                                      수정
+                                    </button>
                                     <button class="mini remove" type="button" data-remove="${item.id}">
                                       삭제
                                     </button>
@@ -738,6 +772,15 @@
       }
     }
 
+    function isEditingDraft() {
+      const activeElement = document.activeElement;
+      return Boolean(
+        activeElement &&
+        categoryPanel.contains(activeElement) &&
+        (activeElement.tagName === "INPUT" || activeElement.tagName === "TEXTAREA")
+      );
+    }
+
     function render() {
       const draftState = captureDraftState();
       renderTabs();
@@ -775,7 +818,8 @@
       return fallbackResult;
     }
 
-    async function refreshFromSupabase() {
+    async function refreshFromSupabase(options = {}) {
+      const { forceRender = false } = options;
       if (!REMOTE_ENABLED) {
         loadFromStorageAsFallback();
         return;
@@ -791,6 +835,11 @@
       }
 
       items = normalizeItems(data);
+      if (!forceRender && isEditingDraft()) {
+        setStatus("Synced");
+        return;
+      }
+
       render();
       setStatus("Synced");
     }
@@ -811,7 +860,7 @@
           return;
         }
 
-        await refreshFromSupabase();
+        await refreshFromSupabase({ forceRender: true });
         return;
       }
 
@@ -848,7 +897,7 @@
 
         if (input) input.value = "";
         if (noteInput) noteInput.value = "";
-        await refreshFromSupabase();
+        await refreshFromSupabase({ forceRender: true });
         return;
       }
 
@@ -885,13 +934,55 @@
           return;
         }
 
-        await refreshFromSupabase();
+        await refreshFromSupabase({ forceRender: true });
         return;
       }
 
       items = items.filter((item) => item.id !== itemId);
       saveLocalItems(items);
       setStatus("Item deleted");
+      render();
+    }
+
+    async function editShoppingItem(itemId) {
+      const currentItem = items.find((item) => item.id === itemId);
+      if (!currentItem) return;
+
+      const nextText = window.prompt("수정할 내용을 입력하세요", currentItem.text);
+      if (nextText === null) return;
+
+      const nextNote = window.prompt("메모를 수정하세요", currentItem.note || "");
+      if (nextNote === null) return;
+
+      const text = nextText.trim();
+      const note = nextNote.trim();
+
+      if (!text) return;
+
+      if (REMOTE_ENABLED) {
+        const { error } = await supabase
+          .from(TABLE_NAME)
+          .update({ text, note })
+          .eq("id", itemId);
+
+        if (error) {
+          console.error(error);
+          setStatus("Edit failed");
+          return;
+        }
+
+        await refreshFromSupabase({ forceRender: true });
+        return;
+      }
+
+      items = items.map((item) => (
+        item.id === itemId
+          ? { ...item, text, note }
+          : item
+      ));
+
+      saveLocalItems(items);
+      setStatus("Item updated");
       render();
     }
 
@@ -934,6 +1025,12 @@
             return;
           }
 
+          const editButton = event.target.closest("[data-edit]");
+          if (editButton && categoryPanel.contains(editButton)) {
+            void editShoppingItem(editButton.dataset.edit);
+            return;
+          }
+
           const removeButton = event.target.closest("[data-remove]");
           if (removeButton && categoryPanel.contains(removeButton)) {
             void removeShoppingItem(removeButton.dataset.remove);
@@ -973,7 +1070,7 @@
 
     async function init() {
       if (REMOTE_ENABLED) {
-        await refreshFromSupabase();
+        await refreshFromSupabase({ forceRender: true });
         startRealtime();
       } else {
         loadFromStorageAsFallback();

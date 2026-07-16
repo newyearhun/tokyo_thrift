@@ -992,7 +992,10 @@
         render();
       } catch (error) {
         console.error(error);
-        setStatus("Photo upload or add failed");
+        const message = error && typeof error === "object" && "message" in error
+          ? String(error.message)
+          : String(error);
+        setStatus(`Photo upload failed: ${message}`);
       }
     }
 

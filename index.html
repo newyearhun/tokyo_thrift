@@ -1,0 +1,462 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>쇼핑 리스트</title>
+  <style>
+    :root {
+      color-scheme: light;
+      --bg: #f5f7fb;
+      --card: rgba(255, 255, 255, 0.9);
+      --text: #1f2937;
+      --muted: #6b7280;
+      --line: #dbe2ea;
+      --accent: #2563eb;
+      --accent-hover: #1d4ed8;
+      --shadow: 0 18px 50px rgba(15, 23, 42, 0.08);
+      --radius: 18px;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      background:
+        radial-gradient(circle at top, #e8efff 0%, transparent 35%),
+        linear-gradient(180deg, #f8fbff 0%, var(--bg) 100%);
+      color: var(--text);
+      padding: 24px;
+    }
+
+    .app {
+      width: min(100%, 1200px);
+      margin: 0 auto;
+      background: rgba(255, 255, 255, 0.78);
+      backdrop-filter: blur(14px);
+      border: 1px solid rgba(219, 226, 234, 0.8);
+      border-radius: 28px;
+      box-shadow: var(--shadow);
+      padding: 28px;
+    }
+
+    header {
+      display: flex;
+      align-items: start;
+      justify-content: space-between;
+      gap: 16px;
+      margin-bottom: 18px;
+    }
+
+    h1 {
+      margin: 0;
+      font-size: clamp(1.5rem, 3vw, 2rem);
+      letter-spacing: -0.03em;
+    }
+
+    .badge {
+      padding: 10px 14px;
+      border-radius: 999px;
+      background: #eff6ff;
+      color: var(--accent);
+      font-size: 0.9rem;
+      white-space: nowrap;
+      border: 1px solid #dbeafe;
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 16px;
+    }
+
+    .category {
+      background: var(--card);
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      padding: 18px;
+    }
+
+    .category h2 {
+      margin: 0 0 6px;
+      font-size: 1.1rem;
+    }
+
+    .category p {
+      margin: 0 0 16px;
+      color: var(--muted);
+      font-size: 0.92rem;
+    }
+
+    .owner-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 12px;
+    }
+
+    .owner-panel {
+      border: 1px solid #edf2f7;
+      border-radius: 16px;
+      background: #fcfdff;
+      padding: 12px;
+    }
+
+    .owner-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      margin-bottom: 10px;
+    }
+
+    .owner-name {
+      margin: 0;
+      font-size: 0.98rem;
+    }
+
+    .chip {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      padding: 4px 10px;
+      border-radius: 999px;
+      background: #eef2ff;
+      color: #4338ca;
+      font-size: 0.8rem;
+      border: 1px solid #e0e7ff;
+    }
+
+    .input-row {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 12px;
+    }
+
+    input {
+      flex: 1;
+      min-width: 0;
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      padding: 11px 12px;
+      font: inherit;
+      outline: none;
+      background: #fff;
+    }
+
+    input:focus {
+      border-color: rgba(37, 99, 235, 0.45);
+      box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.09);
+    }
+
+    .add-btn {
+      border: 0;
+      border-radius: 12px;
+      padding: 11px 14px;
+      background: var(--accent);
+      color: #fff;
+      font: inherit;
+      cursor: pointer;
+      white-space: nowrap;
+      transition: transform 0.15s ease, background 0.15s ease;
+    }
+
+    .add-btn:hover {
+      transform: translateY(-1px);
+      background: var(--accent-hover);
+    }
+
+    ul {
+      list-style: none;
+      padding: 0;
+      margin: 0;
+      display: grid;
+      gap: 8px;
+    }
+
+    li {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      padding: 10px 12px;
+      background: #f8fafc;
+      border: 1px solid #e5e7eb;
+      border-radius: 12px;
+      word-break: break-word;
+    }
+
+    li.done {
+      color: var(--muted);
+      text-decoration: line-through;
+      opacity: 0.7;
+    }
+
+    .item-text {
+      min-width: 0;
+      flex: 1;
+    }
+
+    .item-actions {
+      display: flex;
+      gap: 6px;
+      flex-shrink: 0;
+    }
+
+    .mini {
+      border: 0;
+      border-radius: 10px;
+      padding: 7px 10px;
+      font-size: 0.85rem;
+      cursor: pointer;
+    }
+
+    .check {
+      background: #dcfce7;
+      color: #166534;
+    }
+
+    .remove {
+      background: #fee2e2;
+      color: #991b1b;
+    }
+
+    .footer {
+      margin-top: 16px;
+      display: flex;
+      justify-content: space-between;
+      gap: 12px;
+      color: var(--muted);
+      font-size: 0.9rem;
+      flex-wrap: wrap;
+    }
+
+    .hint {
+      line-height: 1.5;
+    }
+
+    @media (max-width: 960px) {
+      .grid,
+      .owner-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    @media (max-width: 640px) {
+      .app {
+        padding: 20px;
+        border-radius: 22px;
+      }
+
+      header {
+        flex-direction: column;
+      }
+
+      .input-row {
+        flex-direction: column;
+      }
+    }
+  </style>
+</head>
+<body>
+  <main class="app">
+    <header>
+      <div>
+        <h1>쇼핑 리스트</h1>
+      </div>
+      <div class="badge">정훈 · 시현 공동 관리</div>
+    </header>
+
+    <section class="grid" id="grid"></section>
+
+    <div class="footer">
+      <div class="hint">각 카테고리에서 정훈과 시현의 목록을 함께 볼 수 있어요.</div>
+      <div id="status">준비 완료</div>
+    </div>
+  </main>
+
+  <script>
+    const STORAGE_KEY = "shopping-list-categories";
+    const owners = [
+      { id: "junghun", name: "정훈" },
+      { id: "siyeon", name: "시현" }
+    ];
+    const categories = [
+      { id: "food", title: "음식", description: "장보기, 식재료, 간식" },
+      { id: "cosmetics", title: "화장품", description: "스킨케어, 메이크업, 위생용품" },
+      { id: "clothing", title: "의류", description: "상의, 하의, 신발, 액세서리" },
+      { id: "etc", title: "기타", description: "그 외 필요한 물건" }
+    ];
+
+    const grid = document.getElementById("grid");
+    const status = document.getElementById("status");
+    const defaultData = Object.fromEntries(categories.map((category) => [category.id, []]));
+
+    function cloneDefaultData() {
+      return JSON.parse(JSON.stringify(defaultData));
+    }
+
+    function loadData() {
+      try {
+        const raw = localStorage.getItem(STORAGE_KEY);
+        if (!raw) return cloneDefaultData();
+        const parsed = JSON.parse(raw);
+        return { ...cloneDefaultData(), ...parsed };
+      } catch {
+        return cloneDefaultData();
+      }
+    }
+
+    let data = loadData();
+
+    function saveData(message = "저장됨") {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+      status.textContent = message;
+    }
+
+    function escapeHtml(text) {
+      return text
+        .replaceAll("&", "&amp;")
+        .replaceAll("<", "&lt;")
+        .replaceAll(">", "&gt;")
+        .replaceAll('"', "&quot;")
+        .replaceAll("'", "&#39;");
+    }
+
+    function groupedItems(items, ownerId) {
+      return items.filter((item) => item.owner === ownerId);
+    }
+
+    function render() {
+      grid.innerHTML = "";
+
+      categories.forEach((category) => {
+        const items = data[category.id] || [];
+
+        const section = document.createElement("section");
+        section.className = "category";
+        section.innerHTML = `
+          <h2>${category.title}</h2>
+          <p>${category.description}</p>
+          <div class="owner-grid">
+            ${owners.map((owner) => {
+              const ownerItems = groupedItems(items, owner.id);
+              return `
+                <div class="owner-panel">
+                  <div class="owner-head">
+                    <span class="chip">${owner.name}</span>
+                    <span class="owner-name">${owner.name}</span>
+                  </div>
+                  <div class="input-row">
+                    <input type="text" id="input-${category.id}-${owner.id}" placeholder="${owner.name} ${category.title} 추가" />
+                    <button class="add-btn" data-add="${category.id}" data-owner="${owner.id}">추가</button>
+                  </div>
+                  <ul id="list-${category.id}-${owner.id}">
+                    ${
+                      ownerItems.length
+                        ? ownerItems.map((item, index) => `
+                            <li class="${item.done ? "done" : ""}">
+                              <span class="item-text">${escapeHtml(item.text)}</span>
+                              <div class="item-actions">
+                                <button class="mini check" data-toggle="${category.id}" data-owner="${owner.id}" data-index="${index}">
+                                  ${item.done ? "취소" : "완료"}
+                                </button>
+                                <button class="mini remove" data-remove="${category.id}" data-owner="${owner.id}" data-index="${index}">
+                                  삭제
+                                </button>
+                              </div>
+                            </li>
+                          `).join("")
+                        : `<li style="justify-content:center; color: var(--muted);">아직 항목이 없어요</li>`
+                    }
+                  </ul>
+                </div>
+              `;
+            }).join("")}
+          </div>
+        `;
+
+        grid.appendChild(section);
+      });
+
+      bindEvents();
+    }
+
+    function addItem(categoryId, ownerId) {
+      const input = document.getElementById(`input-${categoryId}-${ownerId}`);
+      const text = input.value.trim();
+      if (!text) return;
+
+      data[categoryId].push({
+        text,
+        done: false,
+        owner: ownerId
+      });
+
+      input.value = "";
+      saveData("항목이 추가되었습니다");
+      render();
+    }
+
+    function toggleItem(categoryId, ownerId, index) {
+      const ownerItems = data[categoryId].filter((item) => item.owner === ownerId);
+      const target = ownerItems[index];
+      if (!target) return;
+
+      target.done = !target.done;
+      saveData("상태가 업데이트되었습니다");
+      render();
+    }
+
+    function removeItem(categoryId, ownerId, index) {
+      const ownerItems = data[categoryId].filter((item) => item.owner === ownerId);
+      const target = ownerItems[index];
+      if (!target) return;
+
+      const originalIndex = data[categoryId].indexOf(target);
+      if (originalIndex >= 0) {
+        data[categoryId].splice(originalIndex, 1);
+      }
+
+      saveData("항목이 삭제되었습니다");
+      render();
+    }
+
+    function bindEvents() {
+      categories.forEach((category) => {
+        owners.forEach((owner) => {
+          const input = document.getElementById(`input-${category.id}-${owner.id}`);
+          const addButton = grid.querySelector(`[data-add="${category.id}"][data-owner="${owner.id}"]`);
+
+          if (input) {
+            input.addEventListener("keydown", (event) => {
+              if (event.key === "Enter") addItem(category.id, owner.id);
+            });
+          }
+
+          if (addButton) {
+            addButton.addEventListener("click", () => addItem(category.id, owner.id));
+          }
+        });
+      });
+
+      grid.querySelectorAll("[data-toggle]").forEach((button) => {
+        button.addEventListener("click", () => {
+          toggleItem(button.dataset.toggle, button.dataset.owner, Number(button.dataset.index));
+        });
+      });
+
+      grid.querySelectorAll("[data-remove]").forEach((button) => {
+        button.addEventListener("click", () => {
+          removeItem(button.dataset.remove, button.dataset.owner, Number(button.dataset.index));
+        });
+      });
+    }
+
+    render();
+  </script>
+</body>
+</html>

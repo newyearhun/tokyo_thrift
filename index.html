@@ -3,19 +3,15 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>쇼핑 리스트</title>
   <style>
     :root {
       color-scheme: light;
       --canvas-light: #ffffff;
       --canvas-cream: #fbfbf5;
-      --surface: #ffffff;
-      --surface-soft: #f6f7f1;
       --ink: #000000;
       --text: #111111;
       --muted: #52525b;
       --shade-30: #d4d4d8;
-      --shade-40: #a1a1aa;
       --hairline-light: #e4e4e7;
       --aloe-10: #c1fbd4;
       --pistachio-10: #d4f9e0;
@@ -59,131 +55,44 @@
       padding: 24px;
     }
 
-    .hero {
+    .category-tabs {
       display: flex;
-      justify-content: space-between;
-      align-items: start;
-      gap: 16px;
-      margin-bottom: 20px;
-      padding-bottom: 20px;
-      border-bottom: 1px solid var(--hairline-light);
-    }
-
-    .eyebrow {
-      display: inline-flex;
-      align-items: center;
+      flex-wrap: wrap;
       gap: 8px;
-      padding: 4px 12px;
-      border-radius: var(--radius-pill);
-      background: var(--aloe-10);
+      margin-bottom: 18px;
+    }
+
+    .tab-btn {
+      border: 1px solid var(--hairline-light);
+      background: var(--canvas-light);
       color: var(--ink);
-      font-size: 12px;
-      letter-spacing: 0.72px;
-      text-transform: uppercase;
-      margin-bottom: 12px;
-    }
-
-    h1 {
-      margin: 0;
-      font-family: "Neue Haas Grotesk Display", "Helvetica Neue", Helvetica, Arial, sans-serif;
-      font-size: clamp(2.8rem, 5vw, 4.4rem);
-      font-weight: 330;
-      line-height: 1;
-      letter-spacing: 0;
-      color: var(--ink);
-    }
-
-    .sub {
-      margin: 10px 0 0;
-      font-size: 16px;
-      line-height: 1.5;
-      color: var(--muted);
-      max-width: 58ch;
-    }
-
-    .hero-meta {
-      display: flex;
-      flex-direction: column;
-      align-items: flex-end;
-      gap: 10px;
-      min-width: 180px;
-    }
-
-    .badge {
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      padding: 8px 14px;
+      padding: 10px 16px;
       border-radius: var(--radius-pill);
-      background: #000000;
-      color: #ffffff;
+      font: inherit;
       font-size: 14px;
       font-weight: 550;
       line-height: 1.5;
-      letter-spacing: 0;
+      cursor: pointer;
+      transition: transform 0.15s ease, background 0.15s ease, box-shadow 0.15s ease;
       box-shadow: var(--shadow-card);
     }
 
-    .small-note {
-      font-size: 14px;
-      color: var(--muted);
-      text-align: right;
-      line-height: 1.49;
+    .tab-btn:hover {
+      transform: translateY(-1px);
     }
 
-    .grid {
-      display: grid;
-      grid-template-columns: repeat(2, minmax(0, 1fr));
-      gap: 16px;
+    .tab-btn.active {
+      background: #000000;
+      color: #ffffff;
+      border-color: #000000;
     }
 
-    .category {
-      background: var(--surface);
+    .category-panel {
+      background: var(--surface, #ffffff);
       border: 1px solid var(--hairline-light);
       border-radius: var(--radius-lg);
       padding: 24px;
       box-shadow: var(--shadow-card);
-    }
-
-    .category-head {
-      display: flex;
-      justify-content: space-between;
-      align-items: start;
-      gap: 12px;
-      margin-bottom: 16px;
-    }
-
-    .category h2 {
-      margin: 0;
-      font-family: "Neue Haas Grotesk Display", "Helvetica Neue", Helvetica, Arial, sans-serif;
-      font-size: 28px;
-      font-weight: 500;
-      line-height: 1.28;
-      letter-spacing: 0.42px;
-      color: var(--ink);
-    }
-
-    .category p {
-      margin: 6px 0 0;
-      color: var(--muted);
-      font-size: 14px;
-      line-height: 1.49;
-    }
-
-    .category-chip {
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      padding: 4px 12px;
-      border-radius: var(--radius-pill);
-      background: var(--pistachio-10);
-      color: var(--ink);
-      font-size: 12px;
-      font-weight: 500;
-      letter-spacing: 0.72px;
-      text-transform: capitalize;
-      white-space: nowrap;
-      border: 1px solid rgba(0, 0, 0, 0.06);
     }
 
     .owner-grid {
@@ -253,14 +162,9 @@
       box-shadow: 0 0 0 1px #000000;
     }
 
-    button {
+    .add-btn {
       appearance: none;
       border: 0;
-      cursor: pointer;
-      transition: transform 0.15s ease, opacity 0.15s ease, box-shadow 0.15s ease, background 0.15s ease;
-    }
-
-    .add-btn {
       padding: 10px 16px;
       border-radius: var(--radius-pill);
       background: #000000;
@@ -269,7 +173,9 @@
       font-weight: 550;
       line-height: 1.5;
       white-space: nowrap;
+      cursor: pointer;
       box-shadow: var(--shadow-card);
+      transition: transform 0.15s ease, background 0.15s ease, box-shadow 0.15s ease;
     }
 
     .add-btn:hover {
@@ -321,12 +227,15 @@
     }
 
     .mini {
+      appearance: none;
+      border: 0;
       padding: 8px 12px;
       border-radius: var(--radius-pill);
       font-size: 13px;
       font-weight: 500;
       line-height: 1.49;
       white-space: nowrap;
+      cursor: pointer;
     }
 
     .check {
@@ -360,7 +269,6 @@
     }
 
     @media (max-width: 960px) {
-      .grid,
       .owner-grid {
         grid-template-columns: 1fr;
       }
@@ -376,20 +284,7 @@
         border-radius: 16px;
       }
 
-      .hero {
-        flex-direction: column;
-      }
-
-      .hero-meta {
-        align-items: flex-start;
-        min-width: 0;
-      }
-
-      .small-note {
-        text-align: left;
-      }
-
-      .category {
+      .category-panel {
         padding: 18px;
       }
 
@@ -402,22 +297,10 @@
 <body>
   <main class="app">
     <section class="shell">
-      <header class="hero">
-        <div>
-          <div class="eyebrow">Transactional track</div>
-          <h1>쇼핑 리스트</h1>
-          <p class="sub">정훈과 시현의 항목을 음식, 화장품, 의류, 기타로 나눠서 한 화면에서 함께 볼 수 있어요.</p>
-        </div>
-        <div class="hero-meta">
-          <div class="badge">Shopifi style</div>
-          <div class="small-note">깔끔한 컬러 대비와 pill 버튼 중심의 심플한 거래형 화면</div>
-        </div>
-      </header>
-
-      <section class="grid" id="grid"></section>
-
+      <div class="category-tabs" id="categoryTabs"></div>
+      <section class="category-panel" id="categoryPanel"></section>
       <div class="footer">
-        <div class="hint"><strong>정훈</strong>과 <strong>시현</strong>의 목록은 각 카테고리 안에서 분리되어 저장됩니다.</div>
+        <div class="hint"><strong>정훈</strong>과 <strong>시현</strong>의 목록은 카테고리별로 따로 저장됩니다.</div>
         <div id="status">준비 완료</div>
       </div>
     </section>
@@ -425,18 +308,20 @@
 
   <script>
     const STORAGE_KEY = "shopping-list-categories";
+    const ACTIVE_CATEGORY_KEY = "shopping-list-active-category";
     const owners = [
       { id: "junghun", name: "정훈" },
       { id: "siyeon", name: "시현" }
     ];
     const categories = [
-      { id: "food", title: "음식", description: "장보기, 식재료, 간식" },
-      { id: "cosmetics", title: "화장품", description: "스킨케어, 메이크업, 위생용품" },
-      { id: "clothing", title: "의류", description: "상의, 하의, 신발, 액세서리" },
-      { id: "etc", title: "기타", description: "그 외 필요한 물건" }
+      { id: "food", title: "음식" },
+      { id: "cosmetics", title: "화장품" },
+      { id: "clothing", title: "의류" },
+      { id: "etc", title: "기타" }
     ];
 
-    const grid = document.getElementById("grid");
+    const categoryTabs = document.getElementById("categoryTabs");
+    const categoryPanel = document.getElementById("categoryPanel");
     const status = document.getElementById("status");
     const defaultData = Object.fromEntries(categories.map((category) => [category.id, []]));
 
@@ -455,10 +340,17 @@
       }
     }
 
+    function loadActiveCategory() {
+      const saved = localStorage.getItem(ACTIVE_CATEGORY_KEY);
+      return categories.some((category) => category.id === saved) ? saved : categories[0].id;
+    }
+
     let data = loadData();
+    let activeCategory = loadActiveCategory();
 
     function saveData(message = "저장됨") {
       localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+      localStorage.setItem(ACTIVE_CATEGORY_KEY, activeCategory);
       status.textContent = message;
     }
 
@@ -475,63 +367,69 @@
       return items.filter((item) => item.owner === ownerId);
     }
 
-    function render() {
-      grid.innerHTML = "";
+    function renderTabs() {
+      categoryTabs.innerHTML = categories.map((category) => `
+        <button class="tab-btn ${category.id === activeCategory ? "active" : ""}" data-category="${category.id}">
+          ${category.title}
+        </button>
+      `).join("");
 
-      categories.forEach((category) => {
-        const items = data[category.id] || [];
-
-        const section = document.createElement("section");
-        section.className = "category";
-        section.innerHTML = `
-          <div class="category-head">
-            <div>
-              <h2>${category.title}</h2>
-              <p>${category.description}</p>
-            </div>
-            <span class="category-chip">category</span>
-          </div>
-          <div class="owner-grid">
-            ${owners.map((owner) => {
-              const ownerItems = groupedItems(items, owner.id);
-              return `
-                <div class="owner-panel">
-                  <div class="owner-head">
-                    <span class="owner-pill">${owner.name}</span>
-                    <span class="owner-name">${owner.name}</span>
-                  </div>
-                  <div class="input-row">
-                    <input type="text" id="input-${category.id}-${owner.id}" placeholder="${owner.name} ${category.title} 추가" />
-                    <button class="add-btn" data-add="${category.id}" data-owner="${owner.id}">추가</button>
-                  </div>
-                  <ul id="list-${category.id}-${owner.id}">
-                    ${
-                      ownerItems.length
-                        ? ownerItems.map((item, index) => `
-                            <li class="${item.done ? "done" : ""}">
-                              <span class="item-text">${escapeHtml(item.text)}</span>
-                              <div class="item-actions">
-                                <button class="mini check" data-toggle="${category.id}" data-owner="${owner.id}" data-index="${index}">
-                                  ${item.done ? "취소" : "완료"}
-                                </button>
-                                <button class="mini remove" data-remove="${category.id}" data-owner="${owner.id}" data-index="${index}">
-                                  삭제
-                                </button>
-                              </div>
-                            </li>
-                          `).join("")
-                        : `<li style="justify-content:center; color: var(--muted);">아직 항목이 없어요</li>`
-                    }
-                  </ul>
-                </div>
-              `;
-            }).join("")}
-          </div>
-        `;
-
-        grid.appendChild(section);
+      categoryTabs.querySelectorAll("[data-category]").forEach((button) => {
+        button.addEventListener("click", () => {
+          activeCategory = button.dataset.category;
+          saveData("카테고리가 전환되었습니다");
+          render();
+        });
       });
+    }
 
+    function renderPanel() {
+      const category = categories.find((item) => item.id === activeCategory) || categories[0];
+      const items = data[category.id] || [];
+
+      categoryPanel.innerHTML = `
+        <div class="owner-grid">
+          ${owners.map((owner) => {
+            const ownerItems = groupedItems(items, owner.id);
+            return `
+              <div class="owner-panel">
+                <div class="owner-head">
+                  <span class="owner-pill">${owner.name}</span>
+                  <span class="owner-name">${owner.name}</span>
+                </div>
+                <div class="input-row">
+                  <input type="text" id="input-${category.id}-${owner.id}" placeholder="${owner.name} ${category.title} 추가" />
+                  <button class="add-btn" data-add="${category.id}" data-owner="${owner.id}">추가</button>
+                </div>
+                <ul id="list-${category.id}-${owner.id}">
+                  ${
+                    ownerItems.length
+                      ? ownerItems.map((item, index) => `
+                          <li class="${item.done ? "done" : ""}">
+                            <span class="item-text">${escapeHtml(item.text)}</span>
+                            <div class="item-actions">
+                              <button class="mini check" data-toggle="${category.id}" data-owner="${owner.id}" data-index="${index}">
+                                ${item.done ? "취소" : "완료"}
+                              </button>
+                              <button class="mini remove" data-remove="${category.id}" data-owner="${owner.id}" data-index="${index}">
+                                삭제
+                              </button>
+                            </div>
+                          </li>
+                        `).join("")
+                      : `<li style="justify-content:center; color: var(--muted);">아직 항목이 없어요</li>`
+                  }
+                </ul>
+              </div>
+            `;
+          }).join("")}
+        </div>
+      `;
+    }
+
+    function render() {
+      renderTabs();
+      renderPanel();
       bindEvents();
     }
 
@@ -576,30 +474,30 @@
     }
 
     function bindEvents() {
-      categories.forEach((category) => {
-        owners.forEach((owner) => {
-          const input = document.getElementById(`input-${category.id}-${owner.id}`);
-          const addButton = grid.querySelector(`[data-add="${category.id}"][data-owner="${owner.id}"]`);
+      const category = categories.find((item) => item.id === activeCategory) || categories[0];
 
-          if (input) {
-            input.addEventListener("keydown", (event) => {
-              if (event.key === "Enter") addItem(category.id, owner.id);
-            });
-          }
+      owners.forEach((owner) => {
+        const input = document.getElementById(`input-${category.id}-${owner.id}`);
+        const addButton = categoryPanel.querySelector(`[data-add="${category.id}"][data-owner="${owner.id}"]`);
 
-          if (addButton) {
-            addButton.addEventListener("click", () => addItem(category.id, owner.id));
-          }
-        });
+        if (input) {
+          input.addEventListener("keydown", (event) => {
+            if (event.key === "Enter") addItem(category.id, owner.id);
+          });
+        }
+
+        if (addButton) {
+          addButton.addEventListener("click", () => addItem(category.id, owner.id));
+        }
       });
 
-      grid.querySelectorAll("[data-toggle]").forEach((button) => {
+      categoryPanel.querySelectorAll("[data-toggle]").forEach((button) => {
         button.addEventListener("click", () => {
           toggleItem(button.dataset.toggle, button.dataset.owner, Number(button.dataset.index));
         });
       });
 
-      grid.querySelectorAll("[data-remove]").forEach((button) => {
+      categoryPanel.querySelectorAll("[data-remove]").forEach((button) => {
         button.addEventListener("click", () => {
           removeItem(button.dataset.remove, button.dataset.owner, Number(button.dataset.index));
         });

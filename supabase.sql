@@ -1,0 +1,43 @@
+create extension if not exists pgcrypto;
+
+create table if not exists public.shopping_items (
+  id uuid primary key default gen_random_uuid(),
+  category_id text not null,
+  owner_id text not null check (owner_id in ('junghun', 'siyeon')),
+  text text not null,
+  done boolean not null default false,
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now()
+);
+
+alter table public.shopping_items enable row level security;
+
+drop policy if exists "Allow public read" on public.shopping_items;
+drop policy if exists "Allow public insert" on public.shopping_items;
+drop policy if exists "Allow public update" on public.shopping_items;
+drop policy if exists "Allow public delete" on public.shopping_items;
+
+create policy "Allow public read"
+on public.shopping_items
+for select
+to public
+using (true);
+
+create policy "Allow public insert"
+on public.shopping_items
+for insert
+to public
+with check (true);
+
+create policy "Allow public update"
+on public.shopping_items
+for update
+to public
+using (true)
+with check (true);
+
+create policy "Allow public delete"
+on public.shopping_items
+for delete
+to public
+using (true);

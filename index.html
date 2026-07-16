@@ -3,6 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>쇼핑 리스트</title>
   <style>
     :root {
       color-scheme: light;
@@ -15,9 +16,7 @@
       --shade-30: #d4d4d8;
       --hairline-light: #e4e4e7;
       --brand-green: #00754a;
-      --brand-green-dark: #1e3932;
       --brand-green-light: #d4e9e2;
-      --brand-gold: #cba258;
       --shadow-card: 0 0 0.5px rgba(0, 0, 0, 0.14), 0 1px 1px rgba(0, 0, 0, 0.24);
       --shadow-float: 0 8px 24px rgba(0, 0, 0, 0.14);
       --radius-sm: 8px;
@@ -63,6 +62,7 @@
     }
 
     .tab-btn {
+      appearance: none;
       border: 1px solid var(--hairline-light);
       background: var(--canvas-light);
       color: var(--ink);
@@ -73,8 +73,8 @@
       font-weight: 550;
       line-height: 1.5;
       cursor: pointer;
-      transition: transform 0.15s ease, background 0.15s ease, box-shadow 0.15s ease;
       box-shadow: var(--shadow-card);
+      transition: transform 0.15s ease, background 0.15s ease, box-shadow 0.15s ease, border-color 0.15s ease;
     }
 
     .tab-btn:hover {
@@ -294,13 +294,22 @@
     </section>
   </main>
 
-  <script>
-    const STORAGE_KEY = "shopping-list-categories";
+  <script type="module">
+    import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm";
+
+    const STORAGE_KEY = "shopping-list-items";
     const ACTIVE_CATEGORY_KEY = "shopping-list-active-category";
+    const LEGACY_STORAGE_KEY = "shopping-list-categories";
+    const SUPABASE_URL = window.__SUPABASE_URL__ || "";
+    const SUPABASE_ANON_KEY = window.__SUPABASE_ANON_KEY__ || "";
+    const TABLE_NAME = "shopping_items";
+    const REMOTE_ENABLED = Boolean(SUPABASE_URL && SUPABASE_ANON_KEY);
+
     const owners = [
       { id: "junghun", name: "정훈" },
       { id: "siyeon", name: "시현" }
     ];
+
     const categories = [
       { id: "food", title: "음식" },
       { id: "cosmetics", title: "화장품" },
@@ -311,39 +320,28 @@
     const categoryTabs = document.getElementById("categoryTabs");
     const categoryPanel = document.getElementById("categoryPanel");
     const status = document.getElementById("status");
-    const defaultData = Object.fromEntries(categories.map((category) => [category.id, []]));
+    const supabase = REMOTE_ENABLED ? createClient(SUPABASE_URL, SUPABASE_ANON_KEY) : null;
 
-    function cloneDefaultData() {
-      return JSON.parse(JSON.stringify(defaultData));
-    }
-
-    function loadData() {
-      try {
-        const raw = localStorage.getItem(STORAGE_KEY);
-        if (!raw) return cloneDefaultData();
-        const parsed = JSON.parse(raw);
-        return { ...cloneDefaultData(), ...parsed };
-      } catch {
-        return cloneDefaultData();
-      }
-    }
+    let items = [];
+    let activeCategory = loadActiveCategory();
+    let realtimeChannel = null;
+    let syncTimer = null;
 
     function loadActiveCategory() {
       const saved = localStorage.getItem(ACTIVE_CATEGORY_KEY);
       return categories.some((category) => category.id === saved) ? saved : categories[0].id;
     }
 
-    let data = loadData();
-    let activeCategory = loadActiveCategory();
+    function makeId() {
+      if (window.crypto && typeof window.crypto.randomUUID === "function") {
+        return window.crypto.randomUUID();
+      }
 
-    function saveData(message = "저장됨") {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
-      localStorage.setItem(ACTIVE_CATEGORY_KEY, activeCategory);
-      status.textContent = message;
+      return `id-${Date.now()}-${Math.random().toString(16).slice(2)}`;
     }
 
     function escapeHtml(text) {
-      return text
+      return String(text)
         .replaceAll("&", "&amp;")
         .replaceAll("<", "&lt;")
         .replaceAll(">", "&gt;")
@@ -351,21 +349,95 @@
         .replaceAll("'", "&#39;");
     }
 
-    function groupedItems(items, ownerId) {
-      return items.filter((item) => item.owner === ownerId);
+    function normalizeItem(item, fallbackCategoryId = "", fallbackOwnerId = "") {
+      const categoryId = item.category_id || item.categoryId || fallbackCategoryId;
+      const ownerId = item.owner_id || item.ownerId || fallbackOwnerId;
+
+      if (!categoryId || !ownerId || !item.text) {
+        return null;
+      }
+
+      return {
+        id: item.id || makeId(),
+        category_id: categoryId,
+        owner_id: ownerId,
+        text: String(item.text),
+        done: Boolean(item.done),
+        created_at: item.created_at || new Date().toISOString()
+      };
+    }
+
+    function normalizeItems(value) {
+      if (!Array.isArray(value)) {
+        return [];
+      }
+
+      return value
+        .map((item) => normalizeItem(item, item.category_id, item.owner_id))
+        .filter(Boolean);
+    }
+
+    function loadLocalItems() {
+      try {
+        const primary = localStorage.getItem(STORAGE_KEY);
+        const legacy = localStorage.getItem(LEGACY_STORAGE_KEY);
+        const raw = primary || legacy;
+
+        if (!raw) return [];
+
+        const parsed = JSON.parse(raw);
+        if (Array.isArray(parsed)) {
+          return normalizeItems(parsed);
+        }
+
+        if (parsed && typeof parsed === "object") {
+          return Object.entries(parsed).flatMap(([categoryId, categoryItems]) => {
+            if (!Array.isArray(categoryItems)) return [];
+
+            return categoryItems
+              .map((item) => normalizeItem(item, categoryId, item.owner || item.owner_id))
+              .filter(Boolean);
+          });
+        }
+      } catch {
+        return [];
+      }
+
+      return [];
+    }
+
+    function saveLocalItems(nextItems) {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(nextItems));
+    }
+
+    function getCategoryItems(categoryId) {
+      return items.filter((item) => item.category_id === categoryId);
+    }
+
+    function getOwnerItems(categoryId, ownerId) {
+      return items.filter((item) => item.category_id === categoryId && item.owner_id === ownerId);
+    }
+
+    function setStatus(message) {
+      status.textContent = message;
     }
 
     function renderTabs() {
-      categoryTabs.innerHTML = categories.map((category) => `
-        <button class="tab-btn ${category.id === activeCategory ? "active" : ""}" data-category="${category.id}">
-          ${category.title}
-        </button>
-      `).join("");
+      categoryTabs.innerHTML = categories
+        .map(
+          (category) => `
+            <button class="tab-btn ${category.id === activeCategory ? "active" : ""}" data-category="${category.id}">
+              ${category.title}
+            </button>
+          `
+        )
+        .join("");
 
       categoryTabs.querySelectorAll("[data-category]").forEach((button) => {
         button.addEventListener("click", () => {
           activeCategory = button.dataset.category;
-          saveData("카테고리가 전환되었습니다");
+          localStorage.setItem(ACTIVE_CATEGORY_KEY, activeCategory);
+          setStatus("카테고리가 전환되었습니다");
           render();
         });
       });
@@ -373,43 +445,49 @@
 
     function renderPanel() {
       const category = categories.find((item) => item.id === activeCategory) || categories[0];
-      const items = data[category.id] || [];
 
       categoryPanel.innerHTML = `
         <div class="owner-grid">
-          ${owners.map((owner) => {
-            const ownerItems = groupedItems(items, owner.id);
-            return `
-              <div class="owner-panel">
-                <div class="owner-head">
-                  <span class="owner-name">${owner.name}</span>
+          ${owners
+            .map((owner) => {
+              const ownerItems = getOwnerItems(category.id, owner.id);
+
+              return `
+                <div class="owner-panel">
+                  <div class="owner-head">
+                    <span class="owner-name">${owner.name}</span>
+                  </div>
+                  <div class="input-row">
+                    <input type="text" id="input-${category.id}-${owner.id}" placeholder="${owner.name} ${category.title} 추가" />
+                    <button class="add-btn" data-add="${category.id}" data-owner="${owner.id}">추가</button>
+                  </div>
+                  <ul id="list-${category.id}-${owner.id}">
+                    ${
+                      ownerItems.length
+                        ? ownerItems
+                            .map(
+                              (item) => `
+                                <li class="${item.done ? "done" : ""}">
+                                  <span class="item-text">${escapeHtml(item.text)}</span>
+                                  <div class="item-actions">
+                                    <button class="mini check" data-toggle="${item.id}">
+                                      ${item.done ? "취소" : "완료"}
+                                    </button>
+                                    <button class="mini remove" data-remove="${item.id}">
+                                      삭제
+                                    </button>
+                                  </div>
+                                </li>
+                              `
+                            )
+                            .join("")
+                        : `<li style="justify-content:center; color: var(--muted);">아직 항목이 없어요</li>`
+                    }
+                  </ul>
                 </div>
-                <div class="input-row">
-                  <input type="text" id="input-${category.id}-${owner.id}" placeholder="${owner.name} ${category.title} 추가" />
-                  <button class="add-btn" data-add="${category.id}" data-owner="${owner.id}">추가</button>
-                </div>
-                <ul id="list-${category.id}-${owner.id}">
-                  ${
-                    ownerItems.length
-                      ? ownerItems.map((item, index) => `
-                          <li class="${item.done ? "done" : ""}">
-                            <span class="item-text">${escapeHtml(item.text)}</span>
-                            <div class="item-actions">
-                              <button class="mini check" data-toggle="${category.id}" data-owner="${owner.id}" data-index="${index}">
-                                ${item.done ? "취소" : "완료"}
-                              </button>
-                              <button class="mini remove" data-remove="${category.id}" data-owner="${owner.id}" data-index="${index}">
-                                삭제
-                              </button>
-                            </div>
-                          </li>
-                        `).join("")
-                      : `<li style="justify-content:center; color: var(--muted);">아직 항목이 없어요</li>`
-                  }
-                </ul>
-              </div>
-            `;
-          }).join("")}
+              `;
+            })
+            .join("")}
         </div>
       `;
     }
@@ -420,43 +498,126 @@
       bindEvents();
     }
 
-    function addItem(categoryId, ownerId) {
-      const input = document.getElementById(`input-${categoryId}-${ownerId}`);
-      const text = input.value.trim();
-      if (!text) return;
-
-      data[categoryId].push({
-        text,
-        done: false,
-        owner: ownerId
-      });
-
-      input.value = "";
-      saveData("항목이 추가되었습니다");
+    function loadFromStorageAsFallback() {
+      items = loadLocalItems();
       render();
     }
 
-    function toggleItem(categoryId, ownerId, index) {
-      const ownerItems = data[categoryId].filter((item) => item.owner === ownerId);
-      const target = ownerItems[index];
-      if (!target) return;
-
-      target.done = !target.done;
-      saveData("상태가 업데이트되었습니다");
-      render();
-    }
-
-    function removeItem(categoryId, ownerId, index) {
-      const ownerItems = data[categoryId].filter((item) => item.owner === ownerId);
-      const target = ownerItems[index];
-      if (!target) return;
-
-      const originalIndex = data[categoryId].indexOf(target);
-      if (originalIndex >= 0) {
-        data[categoryId].splice(originalIndex, 1);
+    async function refreshFromSupabase() {
+      if (!REMOTE_ENABLED) {
+        loadFromStorageAsFallback();
+        return;
       }
 
-      saveData("항목이 삭제되었습니다");
+      const { data, error } = await supabase
+        .from(TABLE_NAME)
+        .select("id, category_id, owner_id, text, done, created_at")
+        .order("created_at", { ascending: true });
+
+      if (error) {
+        console.error(error);
+        setStatus("Supabase 불러오기 실패");
+        loadFromStorageAsFallback();
+        return;
+      }
+
+      items = normalizeItems(data);
+      render();
+      setStatus("동기화됨");
+    }
+
+    async function addItem(categoryId, ownerId) {
+      const input = document.getElementById(`input-${categoryId}-${ownerId}`);
+      const text = input.value.trim();
+
+      if (!text) return;
+
+      if (REMOTE_ENABLED) {
+        const newItem = {
+          id: makeId(),
+          category_id: categoryId,
+          owner_id: ownerId,
+          text,
+          done: false
+        };
+
+        const { error } = await supabase.from(TABLE_NAME).insert(newItem);
+
+        if (error) {
+          console.error(error);
+          setStatus("추가 실패");
+          return;
+        }
+
+        input.value = "";
+        await refreshFromSupabase();
+        return;
+      }
+
+      items = [
+        ...items,
+        {
+          id: makeId(),
+          category_id: categoryId,
+          owner_id: ownerId,
+          text,
+          done: false,
+          created_at: new Date().toISOString()
+        }
+      ];
+
+      saveLocalItems(items);
+      input.value = "";
+      setStatus("항목이 추가되었습니다");
+      render();
+    }
+
+    async function toggleItem(itemId) {
+      const currentItem = items.find((item) => item.id === itemId);
+      if (!currentItem) return;
+
+      if (REMOTE_ENABLED) {
+        const { error } = await supabase
+          .from(TABLE_NAME)
+          .update({ done: !currentItem.done })
+          .eq("id", itemId);
+
+        if (error) {
+          console.error(error);
+          setStatus("상태 변경 실패");
+          return;
+        }
+
+        await refreshFromSupabase();
+        return;
+      }
+
+      items = items.map((item) => (item.id === itemId ? { ...item, done: !item.done } : item));
+      saveLocalItems(items);
+      setStatus("상태가 업데이트되었습니다");
+      render();
+    }
+
+    async function removeItem(itemId) {
+      const currentItem = items.find((item) => item.id === itemId);
+      if (!currentItem) return;
+
+      if (REMOTE_ENABLED) {
+        const { error } = await supabase.from(TABLE_NAME).delete().eq("id", itemId);
+
+        if (error) {
+          console.error(error);
+          setStatus("삭제 실패");
+          return;
+        }
+
+        await refreshFromSupabase();
+        return;
+      }
+
+      items = items.filter((item) => item.id !== itemId);
+      saveLocalItems(items);
+      setStatus("항목이 삭제되었습니다");
       render();
     }
 
@@ -469,29 +630,80 @@
 
         if (input) {
           input.addEventListener("keydown", (event) => {
-            if (event.key === "Enter") addItem(category.id, owner.id);
+            if (event.key === "Enter") {
+              void addItem(category.id, owner.id);
+            }
           });
         }
 
         if (addButton) {
-          addButton.addEventListener("click", () => addItem(category.id, owner.id));
+          addButton.addEventListener("click", () => {
+            void addItem(category.id, owner.id);
+          });
         }
       });
 
       categoryPanel.querySelectorAll("[data-toggle]").forEach((button) => {
         button.addEventListener("click", () => {
-          toggleItem(button.dataset.toggle, button.dataset.owner, Number(button.dataset.index));
+          void toggleItem(button.dataset.toggle);
         });
       });
 
       categoryPanel.querySelectorAll("[data-remove]").forEach((button) => {
         button.addEventListener("click", () => {
-          removeItem(button.dataset.remove, button.dataset.owner, Number(button.dataset.index));
+          void removeItem(button.dataset.remove);
         });
       });
     }
 
-    render();
+    function startRealtime() {
+      if (!REMOTE_ENABLED) return;
+
+      realtimeChannel = supabase
+        .channel("shopping-items-changes")
+        .on(
+          "postgres_changes",
+          { event: "*", schema: "public", table: TABLE_NAME },
+          () => {
+            void refreshFromSupabase();
+          }
+        )
+        .subscribe((state, err) => {
+          if (state === "SUBSCRIBED") {
+            setStatus("Supabase 연결됨");
+          }
+
+          if (state === "CHANNEL_ERROR" || state === "TIMED_OUT") {
+            console.error(state, err);
+          }
+        });
+
+      syncTimer = window.setInterval(() => {
+        void refreshFromSupabase();
+      }, 5000);
+    }
+
+    async function init() {
+      if (REMOTE_ENABLED) {
+        await refreshFromSupabase();
+        startRealtime();
+      } else {
+        loadFromStorageAsFallback();
+        setStatus("로컬 저장 중");
+      }
+    }
+
+    window.addEventListener("beforeunload", () => {
+      if (realtimeChannel) {
+        supabase.removeChannel(realtimeChannel);
+      }
+
+      if (syncTimer) {
+        window.clearInterval(syncTimer);
+      }
+    });
+
+    init();
   </script>
 </body>
 </html>

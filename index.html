@@ -130,14 +130,6 @@
       margin-bottom: 8px;
     }
 
-    .meta-row {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      margin-bottom: 12px;
-      flex-wrap: wrap;
-    }
-
     input {
       flex: 1;
       min-width: 0;
@@ -293,29 +285,10 @@
       gap: 8px;
     }
 
-    .item-link-layout {
-      min-width: 0;
-      display: grid;
-      grid-template-columns: minmax(0, 1fr) 150px;
-      gap: 8px;
-      align-items: start;
-    }
-
     .item-main {
       min-width: 0;
       display: grid;
       gap: 8px;
-    }
-
-    .item-photo {
-      display: block;
-      width: 100%;
-      max-width: 220px;
-      border-radius: 12px;
-      object-fit: cover;
-      aspect-ratio: 4 / 3;
-      border: 1px solid rgba(0, 0, 0, 0.08);
-      box-shadow: 0 6px 18px rgba(0, 0, 0, 0.08);
     }
 
     .item-note {
@@ -329,46 +302,6 @@
       line-height: 1.45;
       color: var(--muted);
       overflow-wrap: anywhere;
-    }
-
-    .photo-picker {
-      display: inline-flex;
-      align-items: center;
-      gap: 8px;
-      min-width: 0;
-    }
-
-    .photo-label {
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      padding: 9px 12px;
-      border-radius: var(--radius-pill);
-      background: #f1f5f4;
-      border: 1px solid var(--hairline-light);
-      color: var(--ink);
-      font-size: 13px;
-      font-weight: 550;
-      cursor: pointer;
-      flex-shrink: 0;
-    }
-
-    .photo-label input {
-      display: none;
-    }
-
-    .photo-picker input[type="file"] {
-      display: none;
-    }
-
-    .photo-name {
-      min-width: 0;
-      max-width: 150px;
-      font-size: 12px;
-      color: var(--muted);
-      overflow: hidden;
-      text-overflow: ellipsis;
-      white-space: nowrap;
     }
 
     .item-actions {
@@ -443,31 +376,6 @@
         flex-direction: column;
       }
 
-      .meta-row {
-        flex-direction: column;
-        align-items: stretch;
-      }
-
-      .item-body-link {
-        grid-template-columns: 1fr;
-      }
-
-      .item-link-layout {
-        grid-template-columns: 1fr;
-      }
-
-      .item-photo {
-        max-width: 100%;
-      }
-
-      .photo-picker {
-        width: 100%;
-        justify-content: space-between;
-      }
-
-      .photo-name {
-        max-width: none;
-      }
     }
   </style>
 </head>
@@ -493,7 +401,6 @@
     const SUPABASE_URL = window.__SUPABASE_URL__ || "";
     const SUPABASE_ANON_KEY = window.__SUPABASE_ANON_KEY__ || "";
     const TABLE_NAME = "shopping_items";
-    const PHOTO_BUCKET = "shopping-item-photos";
     const REMOTE_ENABLED = Boolean(SUPABASE_URL && SUPABASE_ANON_KEY);
 
     const owners = [
@@ -585,73 +492,6 @@
       return text;
     }
 
-    function fileToDataUrl(file) {
-      return new Promise((resolve, reject) => {
-        const reader = new FileReader();
-        reader.onload = () => resolve(String(reader.result || ""));
-        reader.onerror = () => reject(reader.error);
-        reader.readAsDataURL(file);
-      });
-    }
-
-    async function fileToCompressedDataUrl(file, maxSize = 1280, quality = 0.82) {
-      try {
-        if (!window.createImageBitmap) {
-          return await fileToDataUrl(file);
-        }
-
-        const bitmap = await createImageBitmap(file);
-        const scale = Math.min(1, maxSize / Math.max(bitmap.width, bitmap.height));
-        const width = Math.max(1, Math.round(bitmap.width * scale));
-        const height = Math.max(1, Math.round(bitmap.height * scale));
-        const canvas = document.createElement("canvas");
-        canvas.width = width;
-        canvas.height = height;
-
-        const context = canvas.getContext("2d");
-        if (!context) {
-          return await fileToDataUrl(file);
-        }
-
-        context.drawImage(bitmap, 0, 0, width, height);
-        bitmap.close?.();
-        return canvas.toDataURL("image/jpeg", quality);
-      } catch {
-        return await fileToDataUrl(file);
-      }
-    }
-
-    function sanitizeFileName(name) {
-      return String(name || "photo").replace(/[^a-zA-Z0-9._-]+/g, "_").slice(0, 80);
-    }
-
-    async function preparePhotoAttachment(file, categoryId, ownerId) {
-      if (!file) {
-        return { photo_url: "", photo_path: "" };
-      }
-
-      if (!REMOTE_ENABLED) {
-        return { photo_url: await fileToCompressedDataUrl(file), photo_path: "" };
-      }
-
-      const safeName = sanitizeFileName(file.name);
-      const photoPath = `${categoryId}/${ownerId}/${makeId()}-${safeName}`;
-      const { error: uploadError } = await supabase.storage
-        .from(PHOTO_BUCKET)
-        .upload(photoPath, file, {
-          contentType: file.type || "application/octet-stream",
-          upsert: false
-        });
-
-      if (uploadError) {
-        console.warn("Storage upload failed, falling back to inline image.", uploadError);
-        return { photo_url: await fileToCompressedDataUrl(file), photo_path: "" };
-      }
-
-      const { data } = supabase.storage.from(PHOTO_BUCKET).getPublicUrl(photoPath);
-      return { photo_url: data.publicUrl, photo_path: photoPath };
-    }
-
     function extractSingleUrl(text) {
       const source = String(text).trim();
       const matched = source.match(/^(https?:\/\/[^\s<]+|www\.[^\s<]+)$/i);
@@ -672,9 +512,7 @@
     function renderItemContent(text) {
       return renderShoppingItem({
         text,
-        note: "",
-        photo_url: "",
-        photo_path: ""
+        note: ""
       });
     }
 
@@ -682,9 +520,6 @@
       const text = String(item.text);
       const note = String(item.note || "").trim();
       const url = extractSingleUrl(text);
-      const photo = item.photo_url
-        ? `<img class="item-photo" src="${escapeHtml(item.photo_url)}" alt="attached photo" loading="lazy" />`
-        : "";
 
       if (url) {
         const domain = url.hostname.replace(/^www\./, "");
@@ -693,17 +528,14 @@
 
         return `
           <div class="item-body">
-            ${photo}
-            <div class="item-link-layout">
-              <a class="link-card" href="${escapeHtml(url.toString())}" target="_blank" rel="noopener noreferrer">
-                <div class="link-card-top">
-                  <span class="link-card-badge">${escapeHtml(label)}</span>
-                  <span class="link-card-domain">${escapeHtml(domain)}</span>
-                </div>
-                <p class="link-card-url">${escapeHtml(url.toString())}</p>
-              </a>
-              ${noteMarkup}
-            </div>
+            <a class="link-card" href="${escapeHtml(url.toString())}" target="_blank" rel="noopener noreferrer">
+              <div class="link-card-top">
+                <span class="link-card-badge">${escapeHtml(label)}</span>
+                <span class="link-card-domain">${escapeHtml(domain)}</span>
+              </div>
+              <p class="link-card-url">${escapeHtml(url.toString())}</p>
+            </a>
+            ${noteMarkup}
           </div>
         `;
       }
@@ -712,7 +544,6 @@
 
       return `
         <div class="item-body">
-          ${photo}
           <div class="item-main">
             <span class="item-text">${linkifyHtml(text)}</span>
             ${noteMarkup}
@@ -735,8 +566,6 @@
         owner_id: ownerId,
         text: String(item.text),
         note: String(item.note ?? ""),
-        photo_url: String(item.photo_url ?? ""),
-        photo_path: String(item.photo_path ?? ""),
         done: Boolean(item.done),
         created_at: item.created_at || new Date().toISOString()
       };
@@ -838,11 +667,6 @@
                   </div>
                   <div class="meta-row">
                     <input type="text" id="note-${category.id}-${owner.id}" placeholder="메모(선택)" />
-                    <div class="photo-picker">
-                      <label class="photo-label" for="photo-${category.id}-${owner.id}">사진</label>
-                      <input type="file" id="photo-${category.id}-${owner.id}" accept="image/*" />
-                      <span class="photo-name" id="photo-name-${category.id}-${owner.id}">선택 안 됨</span>
-                    </div>
                   </div>
                   <ul id="list-${category.id}-${owner.id}">
                     ${
@@ -875,10 +699,51 @@
       `;
     }
 
+    function captureDraftState() {
+      const drafts = {};
+      categoryPanel.querySelectorAll("input[type='text']").forEach((element) => {
+        if (element.id) {
+          drafts[element.id] = element.value;
+        }
+      });
+
+      const activeElement = document.activeElement;
+      const activeDraft = activeElement && activeElement.id ? {
+        id: activeElement.id,
+        start: typeof activeElement.selectionStart === "number" ? activeElement.selectionStart : null,
+        end: typeof activeElement.selectionEnd === "number" ? activeElement.selectionEnd : null
+      } : null;
+
+      return { drafts, activeDraft };
+    }
+
+    function restoreDraftState(state) {
+      if (!state) return;
+
+      Object.entries(state.drafts || {}).forEach(([id, value]) => {
+        const element = document.getElementById(id);
+        if (element && element.value !== value) {
+          element.value = value;
+        }
+      });
+
+      if (state.activeDraft) {
+        const element = document.getElementById(state.activeDraft.id);
+        if (element && typeof element.focus === "function") {
+          element.focus({ preventScroll: true });
+          if (state.activeDraft.start !== null && state.activeDraft.end !== null && typeof element.setSelectionRange === "function") {
+            element.setSelectionRange(state.activeDraft.start, state.activeDraft.end);
+          }
+        }
+      }
+    }
+
     function render() {
+      const draftState = captureDraftState();
       renderTabs();
       renderPanel();
       bindEvents();
+      restoreDraftState(draftState);
     }
 
     function loadFromStorageAsFallback() {
@@ -889,7 +754,7 @@
     async function fetchSupabaseRows() {
       const primaryQuery = supabase
         .from(TABLE_NAME)
-        .select("id, category_id, owner_id, text, note, photo_url, photo_path, done, created_at")
+        .select("id, category_id, owner_id, text, note, done, created_at")
         .order("created_at", { ascending: true });
 
       const primaryResult = await primaryQuery;
@@ -899,7 +764,7 @@
 
       const fallbackQuery = supabase
         .from(TABLE_NAME)
-        .select("id, category_id, owner_id, text, done, created_at")
+        .select("id, category_id, owner_id, text, note, done, created_at")
         .order("created_at", { ascending: true });
 
       const fallbackResult = await fallbackQuery;
@@ -959,72 +824,52 @@
     async function addShoppingItem(categoryId, ownerId) {
       const input = document.getElementById(`input-${categoryId}-${ownerId}`);
       const noteInput = document.getElementById(`note-${categoryId}-${ownerId}`);
-      const photoInput = document.getElementById(`photo-${categoryId}-${ownerId}`);
-      const photoName = document.getElementById(`photo-name-${categoryId}-${ownerId}`);
       const text = input ? input.value.trim() : "";
       const note = noteInput ? noteInput.value.trim() : "";
-      const file = photoInput && photoInput.files ? photoInput.files[0] : null;
 
       if (!text) return;
 
-      try {
-        const attachment = file ? await preparePhotoAttachment(file, categoryId, ownerId) : { photo_url: "", photo_path: "" };
+      const nextItem = {
+        category_id: categoryId,
+        owner_id: ownerId,
+        text,
+        note,
+        done: false
+      };
 
-        if (REMOTE_ENABLED) {
-          const newItem = {
-            category_id: categoryId,
-            owner_id: ownerId,
-            text,
-            note,
-            photo_url: attachment.photo_url,
-            photo_path: attachment.photo_path,
-            done: false
-          };
+      if (REMOTE_ENABLED) {
+        const { error } = await supabase.from(TABLE_NAME).insert(nextItem);
 
-          const { error } = await supabase.from(TABLE_NAME).insert(newItem);
-
-          if (error) {
-            throw error;
-          }
-
-          if (input) input.value = "";
-          if (noteInput) noteInput.value = "";
-          if (photoInput) photoInput.value = "";
-          if (photoName) photoName.textContent = "No file selected";
-
-          await refreshFromSupabase();
+        if (error) {
+          console.error(error);
+          setStatus("Add failed");
           return;
         }
 
-        items = [
-          ...items,
-          {
-            id: makeId(),
-            category_id: categoryId,
-            owner_id: ownerId,
-            text,
-            note,
-            photo_url: attachment.photo_url,
-            photo_path: attachment.photo_path,
-            done: false,
-            created_at: new Date().toISOString()
-          }
-        ];
-
-        saveLocalItems(items);
         if (input) input.value = "";
         if (noteInput) noteInput.value = "";
-        if (photoInput) photoInput.value = "";
-        if (photoName) photoName.textContent = "No file selected";
-        setStatus("Item added");
-        render();
-      } catch (error) {
-        console.error(error);
-        const message = error && typeof error === "object" && "message" in error
-          ? String(error.message)
-          : String(error);
-        setStatus(`Photo upload failed: ${message}`);
+        await refreshFromSupabase();
+        return;
       }
+
+      items = [
+        ...items,
+        {
+          id: makeId(),
+          category_id: categoryId,
+          owner_id: ownerId,
+          text,
+          note,
+          done: false,
+          created_at: new Date().toISOString()
+        }
+      ];
+
+      saveLocalItems(items);
+      if (input) input.value = "";
+      if (noteInput) noteInput.value = "";
+      setStatus("Item added");
+      render();
     }
 
     async function removeShoppingItem(itemId) {
@@ -1032,13 +877,6 @@
       if (!currentItem) return;
 
       if (REMOTE_ENABLED) {
-        if (currentItem.photo_path) {
-          const { error: storageError } = await supabase.storage.from(PHOTO_BUCKET).remove([currentItem.photo_path]);
-          if (storageError) {
-            console.error(storageError);
-          }
-        }
-
         const { error } = await supabase.from(TABLE_NAME).delete().eq("id", itemId);
 
         if (error) {
@@ -1063,8 +901,6 @@
       owners.forEach((owner) => {
         const input = document.getElementById(`input-${category.id}-${owner.id}`);
         const noteInput = document.getElementById(`note-${category.id}-${owner.id}`);
-        const photoInput = document.getElementById(`photo-${category.id}-${owner.id}`);
-        const photoName = document.getElementById(`photo-name-${category.id}-${owner.id}`);
         const addButton = categoryPanel.querySelector(`[data-add="${category.id}"][data-owner="${owner.id}"]`);
 
         if (input) {
@@ -1080,13 +916,6 @@
             if (event.key === "Enter") {
               void addShoppingItem(category.id, owner.id);
             }
-          });
-        }
-
-        if (photoInput && photoName) {
-          photoInput.addEventListener("change", () => {
-            const file = photoInput.files && photoInput.files[0];
-            photoName.textContent = file ? file.name : "No file selected";
           });
         }
 

@@ -6,8 +6,6 @@ create table if not exists public.shopping_items (
   owner_id text not null check (owner_id in ('junghun', 'siyeon')),
   text text not null,
   note text not null default '',
-  photo_url text not null default '',
-  photo_path text not null default '',
   done boolean not null default false,
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now()
@@ -16,45 +14,11 @@ create table if not exists public.shopping_items (
 alter table public.shopping_items
   add column if not exists note text not null default '';
 
-alter table public.shopping_items
-  add column if not exists photo_url text not null default '';
-
-alter table public.shopping_items
-  add column if not exists photo_path text not null default '';
-
 create index if not exists shopping_items_category_owner_idx
 on public.shopping_items (category_id, owner_id);
 
 create index if not exists shopping_items_created_at_idx
 on public.shopping_items (created_at);
-
-insert into storage.buckets (id, name, public)
-values ('shopping-item-photos', 'shopping-item-photos', true)
-on conflict (id) do update
-set name = excluded.name,
-    public = excluded.public;
-
-drop policy if exists "Public read shopping-item-photos" on storage.objects;
-drop policy if exists "Public insert shopping-item-photos" on storage.objects;
-drop policy if exists "Public delete shopping-item-photos" on storage.objects;
-
-create policy "Public read shopping-item-photos"
-on storage.objects
-for select
-to public
-using (bucket_id = 'shopping-item-photos');
-
-create policy "Public insert shopping-item-photos"
-on storage.objects
-for insert
-to public
-with check (bucket_id = 'shopping-item-photos');
-
-create policy "Public delete shopping-item-photos"
-on storage.objects
-for delete
-to public
-using (bucket_id = 'shopping-item-photos');
 
 create or replace function public.set_shopping_items_updated_at()
 returns trigger

@@ -38,7 +38,7 @@
       font-family: "Inter Variable", Inter, "Helvetica Neue", Helvetica, Arial, "Hiragino Sans", "Hiragino Kaku Gothic ProN", Meiryo, sans-serif;
       background: var(--canvas-cream);
       color: var(--text);
-      padding: 24px;
+      padding: 18px;
     }
 
     .app {
@@ -51,7 +51,7 @@
       border: 1px solid rgba(228, 228, 231, 0.9);
       border-radius: 20px;
       box-shadow: var(--shadow-float);
-      padding: 24px;
+      padding: 18px;
     }
 
     .category-tabs {
@@ -91,7 +91,7 @@
       background: var(--surface);
       border: 1px solid var(--hairline-light);
       border-radius: var(--radius-lg);
-      padding: 24px;
+      padding: 18px;
       box-shadow: var(--shadow-card);
     }
 
@@ -105,7 +105,7 @@
       background: var(--surface);
       border: 1px solid var(--hairline-light);
       border-radius: var(--radius-lg);
-      padding: 14px;
+      padding: 12px;
     }
 
     .owner-head {
@@ -127,7 +127,15 @@
     .input-row {
       display: flex;
       gap: 8px;
+      margin-bottom: 8px;
+    }
+
+    .meta-row {
+      display: flex;
+      align-items: center;
+      gap: 8px;
       margin-bottom: 12px;
+      flex-wrap: wrap;
     }
 
     input {
@@ -135,9 +143,9 @@
       min-width: 0;
       border: 1px solid var(--hairline-light);
       border-radius: var(--radius-sm);
-      padding: 10px 12px;
+      padding: 9px 11px;
       font: inherit;
-      font-size: 16px;
+      font-size: 15px;
       line-height: 1.5;
       background: var(--canvas-light);
       color: var(--ink);
@@ -153,11 +161,11 @@
     .add-btn {
       appearance: none;
       border: 0;
-      padding: 10px 16px;
+      padding: 9px 14px;
       border-radius: var(--radius-pill);
       background: var(--brand-green);
       color: #ffffff;
-      font-size: 14px;
+      font-size: 13px;
       font-weight: 550;
       line-height: 1.5;
       white-space: nowrap;
@@ -199,10 +207,13 @@
       color: var(--muted);
     }
 
+    li.done .item-body {
+      opacity: 0.7;
+    }
+
     .item-text {
       min-width: 0;
-      flex: 1;
-      font-size: 16px;
+      font-size: 15px;
       line-height: 1.5;
       color: var(--ink);
       word-break: break-word;
@@ -275,6 +286,91 @@
       overflow-wrap: anywhere;
     }
 
+    .item-body {
+      min-width: 0;
+      flex: 1;
+      display: grid;
+      gap: 8px;
+    }
+
+    .item-link-layout {
+      min-width: 0;
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) 150px;
+      gap: 8px;
+      align-items: start;
+    }
+
+    .item-main {
+      min-width: 0;
+      display: grid;
+      gap: 8px;
+    }
+
+    .item-photo {
+      display: block;
+      width: 100%;
+      max-width: 220px;
+      border-radius: 12px;
+      object-fit: cover;
+      aspect-ratio: 4 / 3;
+      border: 1px solid rgba(0, 0, 0, 0.08);
+      box-shadow: 0 6px 18px rgba(0, 0, 0, 0.08);
+    }
+
+    .item-note {
+      margin: 0;
+      min-width: 0;
+      border: 1px solid rgba(0, 0, 0, 0.08);
+      border-radius: 12px;
+      background: #fafaf7;
+      padding: 10px 12px;
+      font-size: 13px;
+      line-height: 1.45;
+      color: var(--muted);
+      overflow-wrap: anywhere;
+    }
+
+    .photo-picker {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      min-width: 0;
+    }
+
+    .photo-label {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      padding: 9px 12px;
+      border-radius: var(--radius-pill);
+      background: #f1f5f4;
+      border: 1px solid var(--hairline-light);
+      color: var(--ink);
+      font-size: 13px;
+      font-weight: 550;
+      cursor: pointer;
+      flex-shrink: 0;
+    }
+
+    .photo-label input {
+      display: none;
+    }
+
+    .photo-picker input[type="file"] {
+      display: none;
+    }
+
+    .photo-name {
+      min-width: 0;
+      max-width: 150px;
+      font-size: 12px;
+      color: var(--muted);
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
     .item-actions {
       display: flex;
       gap: 6px;
@@ -335,16 +431,42 @@
       }
 
       .shell {
-        padding: 18px;
+        padding: 14px;
         border-radius: 16px;
       }
 
       .category-panel {
-        padding: 18px;
+        padding: 14px;
       }
 
       .input-row {
         flex-direction: column;
+      }
+
+      .meta-row {
+        flex-direction: column;
+        align-items: stretch;
+      }
+
+      .item-body-link {
+        grid-template-columns: 1fr;
+      }
+
+      .item-link-layout {
+        grid-template-columns: 1fr;
+      }
+
+      .item-photo {
+        max-width: 100%;
+      }
+
+      .photo-picker {
+        width: 100%;
+        justify-content: space-between;
+      }
+
+      .photo-name {
+        max-width: none;
       }
     }
   </style>
@@ -371,6 +493,7 @@
     const SUPABASE_URL = window.__SUPABASE_URL__ || "";
     const SUPABASE_ANON_KEY = window.__SUPABASE_ANON_KEY__ || "";
     const TABLE_NAME = "shopping_items";
+    const PHOTO_BUCKET = "shopping-item-photos";
     const REMOTE_ENABLED = Boolean(SUPABASE_URL && SUPABASE_ANON_KEY);
 
     const owners = [
@@ -462,6 +585,45 @@
       return text;
     }
 
+    function fileToDataUrl(file) {
+      return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = () => resolve(String(reader.result || ""));
+        reader.onerror = () => reject(reader.error);
+        reader.readAsDataURL(file);
+      });
+    }
+
+    function sanitizeFileName(name) {
+      return String(name || "photo").replace(/[^a-zA-Z0-9._-]+/g, "_").slice(0, 80);
+    }
+
+    async function preparePhotoAttachment(file, categoryId, ownerId) {
+      if (!file) {
+        return { photo_url: "", photo_path: "" };
+      }
+
+      if (!REMOTE_ENABLED) {
+        return { photo_url: await fileToDataUrl(file), photo_path: "" };
+      }
+
+      const safeName = sanitizeFileName(file.name);
+      const photoPath = `${categoryId}/${ownerId}/${makeId()}-${safeName}`;
+      const { error: uploadError } = await supabase.storage
+        .from(PHOTO_BUCKET)
+        .upload(photoPath, file, {
+          contentType: file.type || "application/octet-stream",
+          upsert: false
+        });
+
+      if (uploadError) {
+        throw uploadError;
+      }
+
+      const { data } = supabase.storage.from(PHOTO_BUCKET).getPublicUrl(photoPath);
+      return { photo_url: data.publicUrl, photo_path: photoPath };
+    }
+
     function extractSingleUrl(text) {
       const source = String(text).trim();
       const matched = source.match(/^(https?:\/\/[^\s<]+|www\.[^\s<]+)$/i);
@@ -480,24 +642,55 @@
     }
 
     function renderItemContent(text) {
+      return renderShoppingItem({
+        text,
+        note: "",
+        photo_url: "",
+        photo_path: ""
+      });
+    }
+
+    function renderShoppingItem(item) {
+      const text = String(item.text);
+      const note = String(item.note || "").trim();
       const url = extractSingleUrl(text);
+      const photo = item.photo_url
+        ? `<img class="item-photo" src="${escapeHtml(item.photo_url)}" alt="attached photo" loading="lazy" />`
+        : "";
 
       if (url) {
         const domain = url.hostname.replace(/^www\./, "");
-        const label = domain.includes("google.com") && url.pathname.includes("/maps") ? "지도" : "링크";
+        const label = domain.includes("google.com") && url.pathname.includes("/maps") ? "map" : "link";
+        const noteMarkup = note ? `<div class="item-note">${escapeHtml(note)}</div>` : "";
 
         return `
-          <a class="link-card" href="${escapeHtml(url.toString())}" target="_blank" rel="noopener noreferrer">
-            <div class="link-card-top">
-              <span class="link-card-badge">${escapeHtml(label)}</span>
-              <span class="link-card-domain">${escapeHtml(domain)}</span>
+          <div class="item-body">
+            ${photo}
+            <div class="item-link-layout">
+              <a class="link-card" href="${escapeHtml(url.toString())}" target="_blank" rel="noopener noreferrer">
+                <div class="link-card-top">
+                  <span class="link-card-badge">${escapeHtml(label)}</span>
+                  <span class="link-card-domain">${escapeHtml(domain)}</span>
+                </div>
+                <p class="link-card-url">${escapeHtml(url.toString())}</p>
+              </a>
+              ${noteMarkup}
             </div>
-            <p class="link-card-url">${escapeHtml(url.toString())}</p>
-          </a>
+          </div>
         `;
       }
 
-      return `<span class="item-text">${linkifyHtml(text)}</span>`;
+      const noteMarkup = note ? `<div class="item-note">${escapeHtml(note)}</div>` : "";
+
+      return `
+        <div class="item-body">
+          ${photo}
+          <div class="item-main">
+            <span class="item-text">${linkifyHtml(text)}</span>
+            ${noteMarkup}
+          </div>
+        </div>
+      `;
     }
 
     function normalizeItem(item, fallbackCategoryId = "", fallbackOwnerId = "") {
@@ -513,6 +706,9 @@
         category_id: categoryId,
         owner_id: ownerId,
         text: String(item.text),
+        note: String(item.note ?? ""),
+        photo_url: String(item.photo_url ?? ""),
+        photo_path: String(item.photo_path ?? ""),
         done: Boolean(item.done),
         created_at: item.created_at || new Date().toISOString()
       };
@@ -612,6 +808,14 @@
                     <input type="text" id="input-${category.id}-${owner.id}" placeholder="${owner.name} ${category.title} 추가" />
                     <button class="add-btn" data-add="${category.id}" data-owner="${owner.id}">추가</button>
                   </div>
+                  <div class="meta-row">
+                    <input type="text" id="note-${category.id}-${owner.id}" placeholder="메모(선택)" />
+                    <div class="photo-picker">
+                      <label class="photo-label" for="photo-${category.id}-${owner.id}">사진</label>
+                      <input type="file" id="photo-${category.id}-${owner.id}" accept="image/*" />
+                      <span class="photo-name" id="photo-name-${category.id}-${owner.id}">선택 안 됨</span>
+                    </div>
+                  </div>
                   <ul id="list-${category.id}-${owner.id}">
                     ${
                       ownerItems.length
@@ -619,7 +823,7 @@
                             .map(
                               (item) => `
                               <li class="${item.done ? "done" : ""}">
-                                  ${renderItemContent(item.text)}
+                                  ${renderShoppingItem(item)}
                                   <div class="item-actions">
                                     <button class="mini check" data-toggle="${item.id}">
                                       ${item.done ? "취소" : "완료"}
@@ -662,64 +866,19 @@
 
       const { data, error } = await supabase
         .from(TABLE_NAME)
-        .select("id, category_id, owner_id, text, done, created_at")
+        .select("id, category_id, owner_id, text, note, photo_url, photo_path, done, created_at")
         .order("created_at", { ascending: true });
 
       if (error) {
         console.error(error);
-        setStatus("Supabase 불러오기 실패");
+        setStatus("Supabase load failed");
         loadFromStorageAsFallback();
         return;
       }
 
       items = normalizeItems(data);
       render();
-      setStatus("동기화됨");
-    }
-
-    async function addItem(categoryId, ownerId) {
-      const input = document.getElementById(`input-${categoryId}-${ownerId}`);
-      const text = input.value.trim();
-
-      if (!text) return;
-
-      if (REMOTE_ENABLED) {
-        const newItem = {
-          category_id: categoryId,
-          owner_id: ownerId,
-          text,
-          done: false
-        };
-
-        const { error } = await supabase.from(TABLE_NAME).insert(newItem);
-
-        if (error) {
-          console.error(error);
-          setStatus("추가 실패");
-          return;
-        }
-
-        input.value = "";
-        await refreshFromSupabase();
-        return;
-      }
-
-      items = [
-        ...items,
-        {
-          id: makeId(),
-          category_id: categoryId,
-          owner_id: ownerId,
-          text,
-          done: false,
-          created_at: new Date().toISOString()
-        }
-      ];
-
-      saveLocalItems(items);
-      input.value = "";
-      setStatus("항목이 추가되었습니다");
-      render();
+      setStatus("Synced");
     }
 
     async function toggleItem(itemId) {
@@ -734,7 +893,7 @@
 
         if (error) {
           console.error(error);
-          setStatus("상태 변경 실패");
+          setStatus("Status update failed");
           return;
         }
 
@@ -744,20 +903,95 @@
 
       items = items.map((item) => (item.id === itemId ? { ...item, done: !item.done } : item));
       saveLocalItems(items);
-      setStatus("상태가 업데이트되었습니다");
+      setStatus("Status updated");
       render();
     }
 
-    async function removeItem(itemId) {
+    async function addShoppingItem(categoryId, ownerId) {
+      const input = document.getElementById(`input-${categoryId}-${ownerId}`);
+      const noteInput = document.getElementById(`note-${categoryId}-${ownerId}`);
+      const photoInput = document.getElementById(`photo-${categoryId}-${ownerId}`);
+      const photoName = document.getElementById(`photo-name-${categoryId}-${ownerId}`);
+      const text = input ? input.value.trim() : "";
+      const note = noteInput ? noteInput.value.trim() : "";
+      const file = photoInput && photoInput.files ? photoInput.files[0] : null;
+
+      if (!text) return;
+
+      try {
+        const attachment = file ? await preparePhotoAttachment(file, categoryId, ownerId) : { photo_url: "", photo_path: "" };
+
+        if (REMOTE_ENABLED) {
+          const newItem = {
+            category_id: categoryId,
+            owner_id: ownerId,
+            text,
+            note,
+            photo_url: attachment.photo_url,
+            photo_path: attachment.photo_path,
+            done: false
+          };
+
+          const { error } = await supabase.from(TABLE_NAME).insert(newItem);
+
+          if (error) {
+            throw error;
+          }
+
+          if (input) input.value = "";
+          if (noteInput) noteInput.value = "";
+          if (photoInput) photoInput.value = "";
+          if (photoName) photoName.textContent = "No file selected";
+
+          await refreshFromSupabase();
+          return;
+        }
+
+        items = [
+          ...items,
+          {
+            id: makeId(),
+            category_id: categoryId,
+            owner_id: ownerId,
+            text,
+            note,
+            photo_url: attachment.photo_url,
+            photo_path: attachment.photo_path,
+            done: false,
+            created_at: new Date().toISOString()
+          }
+        ];
+
+        saveLocalItems(items);
+        if (input) input.value = "";
+        if (noteInput) noteInput.value = "";
+        if (photoInput) photoInput.value = "";
+        if (photoName) photoName.textContent = "No file selected";
+        setStatus("Item added");
+        render();
+      } catch (error) {
+        console.error(error);
+        setStatus("Photo upload or add failed");
+      }
+    }
+
+    async function removeShoppingItem(itemId) {
       const currentItem = items.find((item) => item.id === itemId);
       if (!currentItem) return;
 
       if (REMOTE_ENABLED) {
+        if (currentItem.photo_path) {
+          const { error: storageError } = await supabase.storage.from(PHOTO_BUCKET).remove([currentItem.photo_path]);
+          if (storageError) {
+            console.error(storageError);
+          }
+        }
+
         const { error } = await supabase.from(TABLE_NAME).delete().eq("id", itemId);
 
         if (error) {
           console.error(error);
-          setStatus("삭제 실패");
+          setStatus("Delete failed");
           return;
         }
 
@@ -767,7 +1001,7 @@
 
       items = items.filter((item) => item.id !== itemId);
       saveLocalItems(items);
-      setStatus("항목이 삭제되었습니다");
+      setStatus("Item deleted");
       render();
     }
 
@@ -776,19 +1010,37 @@
 
       owners.forEach((owner) => {
         const input = document.getElementById(`input-${category.id}-${owner.id}`);
+        const noteInput = document.getElementById(`note-${category.id}-${owner.id}`);
+        const photoInput = document.getElementById(`photo-${category.id}-${owner.id}`);
+        const photoName = document.getElementById(`photo-name-${category.id}-${owner.id}`);
         const addButton = categoryPanel.querySelector(`[data-add="${category.id}"][data-owner="${owner.id}"]`);
 
         if (input) {
           input.addEventListener("keydown", (event) => {
             if (event.key === "Enter") {
-              void addItem(category.id, owner.id);
+              void addShoppingItem(category.id, owner.id);
             }
+          });
+        }
+
+        if (noteInput) {
+          noteInput.addEventListener("keydown", (event) => {
+            if (event.key === "Enter") {
+              void addShoppingItem(category.id, owner.id);
+            }
+          });
+        }
+
+        if (photoInput && photoName) {
+          photoInput.addEventListener("change", () => {
+            const file = photoInput.files && photoInput.files[0];
+            photoName.textContent = file ? file.name : "No file selected";
           });
         }
 
         if (addButton) {
           addButton.addEventListener("click", () => {
-            void addItem(category.id, owner.id);
+            void addShoppingItem(category.id, owner.id);
           });
         }
       });
@@ -801,7 +1053,7 @@
 
       categoryPanel.querySelectorAll("[data-remove]").forEach((button) => {
         button.addEventListener("click", () => {
-          void removeItem(button.dataset.remove);
+          void removeShoppingItem(button.dataset.remove);
         });
       });
     }
@@ -820,7 +1072,7 @@
         )
         .subscribe((state, err) => {
           if (state === "SUBSCRIBED") {
-            setStatus("Supabase 연결됨");
+            setStatus("Supabase connected");
           }
 
           if (state === "CHANNEL_ERROR" || state === "TIMED_OUT") {
@@ -839,7 +1091,7 @@
         startRealtime();
       } else {
         loadFromStorageAsFallback();
-        setStatus("로컬 저장 중");
+        setStatus("Local mode");
       }
     }
 

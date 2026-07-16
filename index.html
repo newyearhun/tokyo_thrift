@@ -594,6 +594,33 @@
       });
     }
 
+    async function fileToCompressedDataUrl(file, maxSize = 1280, quality = 0.82) {
+      try {
+        if (!window.createImageBitmap) {
+          return await fileToDataUrl(file);
+        }
+
+        const bitmap = await createImageBitmap(file);
+        const scale = Math.min(1, maxSize / Math.max(bitmap.width, bitmap.height));
+        const width = Math.max(1, Math.round(bitmap.width * scale));
+        const height = Math.max(1, Math.round(bitmap.height * scale));
+        const canvas = document.createElement("canvas");
+        canvas.width = width;
+        canvas.height = height;
+
+        const context = canvas.getContext("2d");
+        if (!context) {
+          return await fileToDataUrl(file);
+        }
+
+        context.drawImage(bitmap, 0, 0, width, height);
+        bitmap.close?.();
+        return canvas.toDataURL("image/jpeg", quality);
+      } catch {
+        return await fileToDataUrl(file);
+      }
+    }
+
     function sanitizeFileName(name) {
       return String(name || "photo").replace(/[^a-zA-Z0-9._-]+/g, "_").slice(0, 80);
     }
@@ -604,7 +631,7 @@
       }
 
       if (!REMOTE_ENABLED) {
-        return { photo_url: await fileToDataUrl(file), photo_path: "" };
+        return { photo_url: await fileToCompressedDataUrl(file), photo_path: "" };
       }
 
       const safeName = sanitizeFileName(file.name);
@@ -617,7 +644,8 @@
         });
 
       if (uploadError) {
-        throw uploadError;
+        console.warn("Storage upload failed, falling back to inline image.", uploadError);
+        return { photo_url: await fileToCompressedDataUrl(file), photo_path: "" };
       }
 
       const { data } = supabase.storage.from(PHOTO_BUCKET).getPublicUrl(photoPath);

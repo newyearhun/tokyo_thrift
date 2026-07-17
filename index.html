@@ -217,13 +217,13 @@
     }
 
     .item-link {
-      color: var(--brand-green);
+      color: #d8c39a;
       text-decoration: underline;
       word-break: break-all;
     }
 
     .item-link:hover {
-      color: #0a6f44;
+      color: #c9ae76;
     }
 
     .link-card {
@@ -286,6 +286,19 @@
       min-width: 0;
       display: grid;
       gap: 8px;
+    }
+
+    .text-card {
+      min-width: 0;
+      border: 1px solid rgba(0, 0, 0, 0.12);
+      border-radius: 12px;
+      background: #fcfcf9;
+      padding: 12px 14px;
+      font-size: 14px;
+      line-height: 1.5;
+      color: rgba(0, 0, 0, 0.92);
+      overflow-wrap: anywhere;
+      white-space: pre-wrap;
     }
 
     .item-note {
@@ -835,7 +848,9 @@
       return `
         <div class="item-body">
           <div class="item-main">
-            <span class="item-text">${linkifyHtml(text)}</span>
+            <div class="text-card">
+              <span class="item-text">${linkifyHtml(text)}</span>
+            </div>
           </div>
         </div>
       `;

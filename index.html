@@ -381,6 +381,11 @@
       color: var(--ink);
     }
 
+    .note-edit {
+      background: #eaf3ef;
+      color: var(--ink);
+    }
+
     .remove {
       background: #eeeeee;
       color: var(--ink);
@@ -612,11 +617,11 @@
       const text = String(item.text);
       const note = String(item.note || "").trim();
       const url = extractSingleUrl(text);
+      const noteMarkup = note ? `<div class="item-note">${escapeHtml(note)}</div>` : "";
 
       if (url) {
         const domain = url.hostname.replace(/^www\./, "");
         const label = domain.includes("google.com") && url.pathname.includes("/maps") ? "map" : "link";
-        const noteMarkup = note ? `<div class="item-note">${escapeHtml(note)}</div>` : "";
 
         return `
           <div class="item-body">
@@ -772,6 +777,7 @@
                                       <button class="mini check" type="button" data-toggle="${item.id}">
                                         ${item.done ? "취소" : "완료"}
                                       </button>
+                                      ${extractSingleUrl(item.text || "") ? `<button class="mini note-edit" type="button" data-edit-note="${item.id}">메모 수정</button>` : ""}
                                       <button class="mini edit" type="button" data-edit="${item.id}">
                                         수정
                                       </button>
@@ -1053,6 +1059,44 @@
       render();
     }
 
+    async function editShoppingItemNote(itemId) {
+      const currentItem = items.find((item) => item.id === itemId);
+      if (!currentItem) return;
+
+      if (!extractSingleUrl(currentItem.text || "")) return;
+
+      const nextNote = window.prompt("링크 메모를 수정하세요", currentItem.note || "");
+      if (nextNote === null) return;
+
+      const note = nextNote.trim();
+
+      if (REMOTE_ENABLED) {
+        const { error } = await supabase
+          .from(TABLE_NAME)
+          .update({ note })
+          .eq("id", itemId);
+
+        if (error) {
+          console.error(error);
+          setStatus("Note update failed");
+          return;
+        }
+
+        await refreshFromSupabase({ forceRender: true });
+        return;
+      }
+
+      items = items.map((item) => (
+        item.id === itemId
+          ? { ...item, note }
+          : item
+      ));
+
+      saveLocalItems(items);
+      setStatus("Note updated");
+      render();
+    }
+
     function bindEvents() {
       const category = categories.find((item) => item.id === activeCategory) || categories[0];
 
@@ -1104,6 +1148,12 @@
           const editButton = event.target.closest("[data-edit]");
           if (editButton && categoryPanel.contains(editButton)) {
             void editShoppingItem(editButton.dataset.edit);
+            return;
+          }
+
+          const noteEditButton = event.target.closest("[data-edit-note]");
+          if (noteEditButton && categoryPanel.contains(noteEditButton)) {
+            void editShoppingItemNote(noteEditButton.dataset.editNote);
             return;
           }
 

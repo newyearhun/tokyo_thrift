@@ -1212,7 +1212,11 @@
       const currentItem = items.find((item) => item.id === itemId);
       if (!currentItem) return;
 
-      const nextText = window.prompt("수정할 내용을 입력하세요", currentItem.text);
+      const nextText = await openMultilineEditor({
+        title: "수정할 내용을 입력하세요",
+        value: currentItem.text || "",
+        hint: "줄바꿈은 Enter, 저장은 Ctrl+Enter 또는 저장 버튼으로 할 수 있어요."
+      });
       if (nextText === null) return;
 
       const text = nextText.trim();

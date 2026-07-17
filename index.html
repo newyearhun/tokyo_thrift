@@ -209,10 +209,11 @@
     }
 
     .item-text {
-      display: inline;
+      display: block;
+      width: 100%;
       min-width: 0;
-      font-size: inherit;
-      line-height: inherit;
+      font-size: 15px;
+      line-height: 1.5;
       color: var(--ink);
       word-break: break-word;
       text-align: left;
@@ -288,20 +289,16 @@
       min-width: 0;
       display: grid;
       gap: 4px;
-      justify-items: start;
     }
 
     .text-card {
       min-width: 0;
-      width: fit-content;
-      max-width: 100%;
-      display: inline-block;
       border: 1px solid rgba(0, 0, 0, 0.12);
       border-radius: 12px;
       background: #fcfcf9;
-      padding: 4px 8px;
-      font-size: 10px;
-      line-height: 1.2;
+      padding: 4px 12px;
+      font-size: 13px;
+      line-height: 1.4;
       color: rgba(0, 0, 0, 0.92);
       overflow-wrap: anywhere;
       white-space: pre-wrap;
@@ -560,9 +557,9 @@
       }
 
       .text-card {
-        padding: 2px 6px;
-        font-size: 9px;
-        line-height: 1.1;
+        padding: 3px 10px;
+        font-size: 12px;
+        line-height: 1.25;
         border-radius: 8px;
       }
 

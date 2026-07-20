@@ -681,7 +681,8 @@
       { id: "food", title: "음식" },
       { id: "cosmetics", title: "화장품" },
       { id: "clothing", title: "의류" },
-      { id: "etc", title: "기타" }
+      { id: "etc", title: "기타" },
+      { id: "packing", title: "메모장", inputLabel: "챙길 짐" }
     ];
 
     const categoryTabs = document.getElementById("categoryTabs");
@@ -996,7 +997,7 @@
                     <span class="owner-name">${owner.name}</span>
                   </div>
                   <div class="input-row">
-                    <input type="text" id="input-${category.id}-${owner.id}" placeholder="${owner.name} ${category.title} 추가" />
+                    <input type="text" id="input-${category.id}-${owner.id}" placeholder="${owner.name} ${category.inputLabel || category.title} 추가" />
                     <button class="add-btn" type="button" data-add="${category.id}" data-owner="${owner.id}">추가</button>
                   </div>
                   <div class="meta-row" id="note-row-${category.id}-${owner.id}" ${extractSingleUrl(draftState?.drafts?.[`input-${category.id}-${owner.id}`] || "") ? "" : "hidden"}>
